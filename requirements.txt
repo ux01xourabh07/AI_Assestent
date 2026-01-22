@@ -1,2 +1,7 @@
+customtkinter
+speechrecognition
+pyttsx3
+pyaudio
 openai
 python-dotenv
+pocketsphinx
