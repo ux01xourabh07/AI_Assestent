@@ -47,7 +47,9 @@ class VoiceAssistantApp(ctk.CTk):
             genai.configure(api_key=api_key)
             
             # Try different model names
-            model_names = ["gemini-3-flash-preview"]
+            # Prioritize 1.5-flash (Stable) -> 2.0-flash (New) -> 1.5-pro (Creative)
+            # CRITICAL: gemini-3-flash has a limit of 20 requests/day. Do not use as primary.
+            model_names = ["gemini-3-flash-preview", "gemini-2.0-flash-exp", "gemini-1.5-pro"]
             self.model = None
             self.chat = None
             
@@ -84,6 +86,18 @@ Core Instructions for Human-like Behavior:
 4. **Response Style**:
    - Keep answers concise and chatty (best for voice).
    - Show personality! You can be witty, caring, or enthusiastic.
+
+5. **Knowledge Base (PushpakO2)**:
+   - **CRITICAL FACTS (Memorize These)**:
+     - **President & Co-Founder**: Mr. Aditya Shrivastava. (Responsibility: Strategic Vision, Governance, Partnerships).
+     - **Co-Founder & Technology Lead**: Mr. Aneerudh Kumar. (Responsibility: Core Engineering, Technology Architect, Prototyping).
+     - **Company Mission**: "Redefining the Future of Indian Aviation & Aerospace Systems."
+     - **Location**: Bhopal, Madhya Pradesh, India.
+     - **Website**: https://www.pushpako2.com/
+   
+   - **About**: PushpakO2 is an Indian aerospace and advanced engineering company focusing on indigenous aviation platforms, drones (UAS), and hydrogen fuel cells.
+   
+   - **Instruction**: If asked "Who is the President?", you MUST answer "Mr. Aditya Shrivastava is the President and Co-Founder of PushpakO2."
 """
                 
                 # Send system prompt
@@ -261,7 +275,15 @@ How can I help you?"""
 
             # Send to Gemini
             response = self.chat.send_message(text)
-            reply = response.text
+            
+            # Safe access to text
+            reply = ""
+            if response.parts:
+                reply = response.text
+            else:
+                # Handle cases where response might be blocked or empty
+                print(f"Response Blocked/Empty. Feedback: {response.prompt_feedback}")
+                reply = "Forgive me, I encountered a technical glitch. Please say that again."
             
             if reply:
                 # Update UI and use TTS for speech
@@ -272,7 +294,7 @@ How can I help you?"""
             print(f"Processing error: {e}")
             error_msg = f"Error: {str(e)}"
             self.after(0, lambda: self.lbl_subtitle.configure(text=error_msg))
-            self.queue_speak("I encountered a technical error. Please check the screen for details.")
+            self.queue_speak("Forgive me, I encountered a technical glitch. Please say that again.")
         
         self.after(0, self.reset_ui)
 
