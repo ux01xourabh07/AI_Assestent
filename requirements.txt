@@ -1,7 +1,10 @@
 customtkinter
-speechrecognition
-pyttsx3
+SpeechRecognition
 pyaudio
-openai
+google-generativeai
 python-dotenv
-pocketsphinx
+edge-tts
+pygame
+fastapi
+uvicorn
+requests

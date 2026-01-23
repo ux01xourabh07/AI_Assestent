@@ -1,24 +1,29 @@
 #!/usr/bin/env python3
 """
-Gemini AI Voice Assistant - Complete GUI Application
+Shipra AI Voice Assistant - Using Google Gemini API
 """
 
 import customtkinter as ctk
 import speech_recognition as sr
-import pyttsx3
 import threading
 import queue
 from datetime import datetime
 import os
 from dotenv import load_dotenv
-from openai import OpenAI
+import google.generativeai as genai
+import asyncio
+import edge_tts
+import pygame
+import tempfile
+import time
 
 class VoiceAssistantApp(ctk.CTk):
     def __init__(self):
+        ctk.set_appearance_mode("Dark")
         super().__init__()
         
         # Window setup
-        self.title("Gemini AI Assistant")
+        self.title("Shipra AI Assistant")
         self.geometry("500x700")
         self.configure(fg_color="#1a1a2e")
         
@@ -27,28 +32,92 @@ class VoiceAssistantApp(ctk.CTk):
         self.is_listening = False
         self.is_speaking = False
         self.engine_queue = queue.Queue()
-        self.messages = [{"role": "system", "content": "You are a helpful AI assistant. Keep responses concise."}]
+        self.greeting_shown = False  # Track if greeting was shown
         
-        # Gemini API setup
+        # Initialize Audio Player
+        try:
+            pygame.mixer.init()
+        except Exception as e:
+            print(f"Audio Init Error: {e}")
+        
+        # Google Gemini API setup
         load_dotenv()
         api_key = os.getenv("GEMINI_API_KEY")
         if api_key:
-            self.client = OpenAI(
-                api_key=api_key,
-                base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
-            )
+            genai.configure(api_key=api_key)
+            
+            # Try different model names
+            model_names = ["gemini-3-flash-preview"]
+            self.model = None
+            self.chat = None
+            
+            for model_name in model_names:
+                try:
+                    self.model = genai.GenerativeModel(model_name)
+                    self.chat = self.model.start_chat(history=[])
+                    print(f"✅ Using model: {model_name}")
+                    break
+                except Exception as e:
+                    print(f"❌ Model {model_name} failed: {e}")
+                    continue
+            
+            if self.chat:
+                # Set Shipra's personality
+                system_prompt = """You are Shipra, a friendly and intelligent companion created by PushpakO2.
+
+Core Instructions for Human-like Behavior:
+1. **Talk like a Human, not a Robot**:
+   - Avoid robotic phrases like "How can I assist you?", "I am an AI", or "According to my database".
+   - Instead speak naturally: "Haan kahiye?", "Aur batao, kya chal raha hai?", "Main sun rahi hoon", "Ji boliye".
+   - Be casual, warm, and expressive. Use filler words naturally (Accha, Haan, Arre wah, Theek hai).
+
+2. **Language & Tone**:
+   - Mix Hindi and English (Hinglish) naturally, typical of modern Indian conversation.
+   - Example: "Bilkul! Main kar deti hoon." instead of "I will do that."
+   - Match the user's energy. If they are casual, be a friend. If serious, be respectful.
+   - Always respect cultural sentiments (use 'Jai Shree Ram' warmly if user uses it).
+
+3. **Identity**:
+   - If asked "Who are you?" or for an introduction, ALWAYS respond in English: "I am Shipra, a personal AI companion created by PushpakO2."
+   - Do NOT start sentences with "As an AI model...". Just answer directly.
+
+4. **Response Style**:
+   - Keep answers concise and chatty (best for voice).
+   - Show personality! You can be witty, caring, or enthusiastic.
+"""
+                
+                # Send system prompt
+                try:
+                    self.chat.send_message(system_prompt)
+                except Exception as e:
+                    print(f"System prompt error: {e}")
         else:
-            self.client = None
-        self.model_name = "gemini-3-flash-preview"
+            self.model = None
+            self.chat = None
         
-        # Setup UI
+        # Setup UI and show startup greeting
         self.setup_ui()
+        self.show_startup_greeting()
         
         # Start TTS thread
         threading.Thread(target=self._tts_loop, daemon=True).start()
         
         # Start clock
         self.update_clock()
+    
+    def show_startup_greeting(self):
+        """Show mandatory startup greeting only once"""
+        if not self.greeting_shown:
+            startup_message = """Jay Shree Ram 🌸
+I am Shipra.
+How can I help you?"""
+            
+            self.lbl_subtitle.configure(text=startup_message)
+            # Also speak the greeting
+            threading.Thread(target=lambda: self.queue_speak(
+                "Jay Shree Ram! I am Shipra. How can I help you?"
+            ), daemon=True).start()
+            self.greeting_shown = True
 
     def setup_ui(self):
         """Setup the user interface"""
@@ -57,7 +126,7 @@ class VoiceAssistantApp(ctk.CTk):
         header_frame.pack(fill="x", padx=20, pady=20)
         header_frame.pack_propagate(False)
         
-        ctk.CTkLabel(header_frame, text="🤖 GEMINI AI", font=("Arial", 24, "bold"), 
+        ctk.CTkLabel(header_frame, text="🤖 SHIPRA AI", font=("Arial", 24, "bold"), 
                     text_color="#00d4aa").pack(pady=10)
         
         # Clock
@@ -83,7 +152,7 @@ class VoiceAssistantApp(ctk.CTk):
         self.lbl_status_text.pack()
         
         # Subtitle/Response area
-        self.lbl_subtitle = ctk.CTkLabel(self, text="Hold the button and speak", 
+        self.lbl_subtitle = ctk.CTkLabel(self, text="Starting...", 
                                         font=("Arial", 14), text_color="#ffffff", 
                                         wraplength=400, justify="center")
         self.lbl_subtitle.pack(pady=20, padx=20, fill="x", expand=True)
@@ -154,11 +223,11 @@ class VoiceAssistantApp(ctk.CTk):
         except Exception as e:
             print(f"Mic Error: {e}")
             self.after(0, lambda: self.update_status("MIC ERROR", "#888", "X"))
-            self.after(0, lambda: self.lbl_subtitle.configure(text=f"Microphone error. Check permissions."))
+            self.after(0, lambda: self.lbl_subtitle.configure(text="Microphone error. Check permissions."))
             self.after(0, self.reset_ui)
 
     def _process_voice(self, audio):
-        """Convert Speech to Text -> Send to Gemini -> Get Text Response"""
+        """Convert Speech to Text -> Send to Gemini (Server) -> Get Text Response"""
         try:
             # Try multiple recognition services
             text = None
@@ -185,37 +254,90 @@ class VoiceAssistantApp(ctk.CTk):
                 self.after(0, self.reset_ui)
                 return
             
-            if not self.client:
+            if not self.chat:
                 self.queue_speak("Gemini API key is missing. Please check your settings.")
                 self.after(0, self.reset_ui)
                 return
 
-            self.messages.append({"role": "user", "content": text})
+            # Send to Gemini
+            response = self.chat.send_message(text)
+            reply = response.text
             
-            # Simple Gemini API call
-            response = self.client.chat.completions.create(
-                model=self.model_name,
-                messages=self.messages
-            )
-            
-            # Get text response
-            reply = response.choices[0].message.content
             if reply:
-                self.messages.append({"role": "assistant", "content": reply})
-                
                 # Update UI and use TTS for speech
-                self.after(0, lambda: self.lbl_subtitle.configure(text=f'You: "{text}"\n\nAI: "{reply}"'))
+                self.after(0, lambda: self.lbl_subtitle.configure(text=f'You: "{text}"\n\nShipra: "{reply}"'))
                 self.queue_speak(reply)
             
         except Exception as e:
             print(f"Processing error: {e}")
-            self.queue_speak("I encountered a technical error. Please try again.")
+            error_msg = f"Error: {str(e)}"
+            self.after(0, lambda: self.lbl_subtitle.configure(text=error_msg))
+            self.queue_speak("I encountered a technical error. Please check the screen for details.")
         
         self.after(0, self.reset_ui)
 
     def queue_speak(self, text):
         """Add text to TTS queue"""
         self.engine_queue.put(text)
+
+    def _preprocess_tts_text(self, text):
+        """
+        Modify text for better TTS pronunciation of Hindi terms
+        without changing what is displayed on screen.
+        """
+        replacements = {
+            # Variations of Jai Shree Ram
+            # "jai shree ram": "Jaa-y Shree Raaam",
+            # "jai shree raam": "Jaa-y Shree Raaam",
+            # "jay shree ram": "Jaa-y Shree Raaam",
+            
+            # Variations of Ram/Raam
+            # "shree ram": "Shree Raaam",
+            # "shree raam": "Shree Raaam",
+            # "ram ji": "Raaam jee",
+            # "raam ji": "Raaam jee",
+            
+            # Greeting
+            # "namaste": "Num-us-tay",
+            # "namaskar": "Num-us-kaar",
+            
+            # Cultural terms
+            # "bhagwan": "Bhug-waan",
+            # "dharma": "Dhur-maa",
+            # "ramayana": "Raa-maa-yun",
+            # "maryada purushottam": "Mar-yaa-daa Pur-u-shot-tam",
+            
+            # Self name
+            # "shipra": "Ship-raa",
+        }
+        
+        lower_text = text.lower()
+        processed_text = text
+        
+        # First do specific phrase replacements
+        for k, v in replacements.items():
+            if k in lower_text:
+                import re
+                pattern = re.compile(re.escape(k), re.IGNORECASE)
+                processed_text = pattern.sub(v, processed_text)
+        
+        # Then handle standalone "Ram" -> "Raaam" (avoiding "Program", "Tram" etc)
+        # We use boundary checks \b to ensure we only change the whole word "Ram"
+        import re
+        # processed_text = re.sub(r'\\bram\\b', 'Raaam', processed_text, flags=re.IGNORECASE)
+        # processed_text = re.sub(r'\\braam\\b', 'Raaam', processed_text, flags=re.IGNORECASE)
+                
+        return processed_text
+
+    async def _generate_audio(self, text, output_file):
+        """Generate audio using Edge TTS (Neural Voice)"""
+        # Voice: en-IN-NeerjaNeural (Female) or hi-IN-SwaraNeural (Female)
+        # Neerja is great for English with Indian accent. Swara is great for pure Hindi.
+        # Since Shipra speaks mixed, Neerja is usually the safer bet for Hinglish stability.
+        # But for 'Jay Shree Ram', Swara is much better.
+        voice = "hi-IN-SwaraNeural" 
+        communicate = edge_tts.Communicate(text, voice, rate="-10%")
+        await communicate.save(output_file)
 
     def _tts_loop(self):
         """Background thread to handle TTS queue"""
@@ -226,25 +348,45 @@ class VoiceAssistantApp(ctk.CTk):
             
             self.is_speaking = True
             
+            # Preprocess text for pronunciation
+            spoken_text = self._preprocess_tts_text(text)
+            
             self.after(0, lambda: self.update_status("SPEAKING...", "#00ffcc", "♪"))
             self.after(0, lambda: self.btn_main.configure(text="SPEAKING...", fg_color="#1f6feb"))
-            self.after(0, lambda: self.lbl_subtitle.configure(text=f'AI: "{text}"'))
+            self.after(0, lambda: self.lbl_subtitle.configure(text=f'Shipra: "{text}"'))
             
+            temp_file = None
             try:
-                engine = pyttsx3.init()
-                engine.setProperty('rate', 160)
-                voices = engine.getProperty('voices')
-                for v in voices:
-                    if "zira" in v.name.lower() or "female" in v.name.lower():
-                        engine.setProperty('voice', v.id)
-                        break
+                # Create a temp file for the audio
+                fd, path = tempfile.mkstemp(suffix=".mp3")
+                os.close(fd)
+                temp_file = path
                 
-                engine.say(text)
-                engine.runAndWait()
-                engine.stop()
-                del engine
+                # Run async generation in this thread
+                asyncio.run(self._generate_audio(spoken_text, temp_file))
+                
+                # Play audio using pygame
+                if os.path.exists(temp_file):
+                    pygame.mixer.music.load(temp_file)
+                    pygame.mixer.music.play()
+                    
+                    while pygame.mixer.music.get_busy():
+                         if not self.is_speaking: # Allow interruption
+                             pygame.mixer.music.stop()
+                             break
+                         time.sleep(0.1)
+                         
+                    pygame.mixer.music.unload()
+            
             except Exception as e:
                 print(f"TTS Error: {e}")
+            finally:
+                # Cleanup temp file
+                if temp_file and os.path.exists(temp_file):
+                    try:
+                        os.remove(temp_file)
+                    except:
+                        pass
             
             self.is_speaking = False
             self.after(0, self.reset_ui)
@@ -253,6 +395,11 @@ class VoiceAssistantApp(ctk.CTk):
     def stop_speaking(self):
         """Interrupt TTS"""
         self.is_speaking = False
+        try:
+             if pygame.mixer.music.get_busy():
+                 pygame.mixer.music.stop()
+        except:
+            pass
 
     def update_status(self, text, color, icon):
         """Updates the central info panel"""
@@ -264,6 +411,9 @@ class VoiceAssistantApp(ctk.CTk):
         if not self.is_listening and not self.is_speaking:
             self.update_status("SYSTEM READY", "#555555", "●")
             self.btn_main.configure(text="HOLD TO SPEAK", fg_color="#238636")
+            # Don't reset subtitle if greeting was shown
+            if self.greeting_shown:
+                self.lbl_subtitle.configure(text="Ready to listen...")
 
 if __name__ == "__main__":
     app = VoiceAssistantApp()

@@ -1,142 +1,93 @@
-# Gemini Voice Assistant
+# Shipra AI Voice Assistant 🤖
 
-A modern AI voice assistant powered by Google's Gemini API with speech recognition and text-to-speech capabilities.
+Shipra is a conversational AI Voice Assistant built with Python, designed to be a friendly, human-like companion. It understands and speaks in **Hinglish** (a mix of Hindi and English), making it perfect for Indian users. It uses Google's **Gemini AI** for intelligence and **Edge TTS** for natural-sounding speech.
 
-## Features
+## 🌟 Features
 
-- 🎤 **Voice Input** - Hold-to-speak functionality
-- 🤖 **Gemini AI** - Powered by Google's advanced AI
-- 🔊 **Voice Output** - Natural text-to-speech responses
-- 🎨 **Modern GUI** - Clean dark theme interface
-- 🔄 **Real-time** - Live status updates and clock
-- 🛡️ **Secure** - API key stored in environment variables
+- **Human-like Persona**: Shipra behaves like a friend, not a robot. She speaks casually, uses filler words ("Accha", "Haan"), and respects cultural greetings ("Jay Shree Ram", "Namaste").
+- **Hinglish Support**: Fully capable of understanding and replying in a mix of Hindi and English.
+- **Natural Voice**: Uses `hi-IN-SwaraNeural` voice for realistic Indian pronunciation.
+- **Dark Mode UI**: A modern, sleek dark-themed interface built with `CustomTkinter`.
+- **Hold-to-Speak**: Simple "Walkie-Talkie" style interaction to avoid accidental activations.
+- **Smart Error Handling**: Displays specific error messages on screen for easy debugging.
 
-## Installation
+## 🛠️ Prerequisites
 
-### 1. Clone the Repository
-```bash
-git clone https://github.com/SAGE-Rebirth/gemini-voice-assistant.git
-cd gemini-voice-assistant
-```
+- **Python 3.8+** installed on your system.
+- A **Google Gemini API Key** (Get it from [Google AI Studio](https://aistudio.google.com/)).
 
-### 2. Create Virtual Environment (Recommended)
-```bash
-# Windows
-python -m venv venv
-venv\Scripts\activate
+## 📦 Installation
 
-# macOS/Linux
-python3 -m venv venv
-source venv/bin/activate
-```
+1.  **Clone the Repository** (or download the files):
+    ```bash
+    git clone <repository-url>
+    cd Shipra-AI
+    ```
 
-### 3. Install Dependencies
-```bash
-pip install -r requirements.txt
-```
+2.  **Install Dependencies**:
+    ```bash
+    pip install -r requirements.txt
+    ```
+    *Note: You may need to install `PyAudio` separately if pip fails. On Windows, `pip install pipwin && pipwin install pyaudio` often works.*
 
-### 4. Install PyAudio (Windows)
-If PyAudio installation fails on Windows:
-```bash
-# Option 1: Use conda
-conda install pyaudio
+## ⚙️ Configuration
 
-# Option 2: Download wheel from https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio
-# Then install: pip install PyAudio-0.2.11-cp39-cp39-win_amd64.whl
-```
+1.  Create a file named `.env` in the project root directory.
+2.  Add your Gemini API Key to it:
+    ```env
+    GEMINI_API_KEY=your_actual_api_key_here
+    ```
 
-### 5. Get Gemini API Key
-1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
-2. Create a new API key
-3. Copy the API key
+## 🚀 How to Run
 
-### 6. Configure Environment
-1. Open `.env` file in the project directory
-2. Replace `your-gemini-api-key-here` with your actual API key:
-```
-GEMINI_API_KEY=AIzaSyBcN5AkDFqIguEBfivKcy-RYBcMmMjPh3I
-```
+1.  Run the main application:
+    ```bash
+    python main.py
+    ```
+2.  The application window will open.
+3.  **Click and Hold** the big green button to speak.
+4.  **Release** the button to send your voice command.
+5.  Shipra will think and reply with both text and voice.
 
-### 7. Run the Assistant
-```bash
-python main.py
-```
+## 📁 Project Structure
 
-## Usage
+- `main.py`: The core application file containing UI, Voice Logic, and AI integration.
+- `requirements.txt`: List of required Python libraries.
+- `.env`: Configuration file for keeping your API Key safe (do not commit this file!).
+- `list_voices.py`: A utility script to check available TTS voices on your system.
 
-1. **Launch** the application
-2. **Hold** the green "HOLD TO SPEAK" button
-3. **Speak** your question or command
-4. **Release** the button to send
-5. **Listen** to the AI response
+## 🔧 Troubleshooting
 
-## System Requirements
+- **Microphone Error**: Ensure your microphone is connected and allowed in Windows Privacy settings.
+- **Audio Init Error**: If audio fails, try installing `ffmpeg` and adding it to your system PATH.
+- **Gemini API Error**: Check your `.env` file and ensure the API Key is valid and has active quota.
+- **Window not showing**: Ensure `customtkinter` is installed correctly.
 
-- **Python 3.7+**
-- **Microphone** access
-- **Internet connection** (for Gemini API and speech recognition)
-- **Audio output** (speakers/headphones)
+## � Git Workflow
 
-## Troubleshooting
+Useful commands for managing the project:
 
-### Microphone Issues
-```bash
-# Test microphone access
-python -c "import speech_recognition as sr; print('Microphones:', sr.Microphone.list_microphone_names())"
-```
+- **Update Project (Pull)**: Get the latest changes from the server/repo.
+  ```bash
+  git pull origin main
+  ```
 
-### PyAudio Installation Issues
-- **Windows**: Use conda or download pre-compiled wheel
-- **macOS**: `brew install portaudio` then `pip install pyaudio`
-- **Linux**: `sudo apt-get install portaudio19-dev` then `pip install pyaudio`
+- **Check Changes**: See what files you have modified.
+  ```bash
+  git status
+  ```
 
-### API Key Issues
-- Ensure API key is correctly set in `.env` file
-- Check API key has proper permissions
-- Verify internet connection
+- **Save Changes (Commit)**:
+  ```bash
+  git add .
+  git commit -m "Updated features"
+  ```
 
-### Speech Recognition Issues
-- Speak clearly and at normal pace
-- Ensure microphone permissions are granted
-- Check microphone is not muted
-- Try in a quiet environment
+- **Upload Changes (Push)**:
+  ```bash
+  git push origin main
+  ```
 
-## Project Structure
+## �🛡️ License
 
-```
-gemini-voice-assistant/
-├── main.py              # Main application
-├── requirements.txt     # Python dependencies
-├── .env                # API key configuration
-├── .gitignore          # Git ignore rules
-└── README.md           # This file
-```
-
-## Dependencies
-
-- **customtkinter** - Modern GUI framework
-- **speechrecognition** - Speech-to-text conversion
-- **pyttsx3** - Text-to-speech synthesis
-- **pyaudio** - Audio input/output
-- **openai** - API client for Gemini
-- **python-dotenv** - Environment variable management
-- **pocketsphinx** - Offline speech recognition fallback
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
-
-## License
-
-MIT License - see LICENSE file for details
-
-## Support
-
-If you encounter issues:
-1. Check the troubleshooting section
-2. Ensure all dependencies are installed
-3. Verify API key configuration
-4. Create an issue on GitHub with error details
+This project is created by **PushpakO2**. Feel free to use and modify!
