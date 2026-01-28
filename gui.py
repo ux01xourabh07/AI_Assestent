@@ -5,8 +5,7 @@ import threading
 import math
 import random
 import pygame
-from brain import ShipraBrain
-from audio import ShipraAudio
+from systems import Systems
 from config import Config
 
 # Theme Settings
@@ -92,9 +91,9 @@ class ShipraGUI(ctk.CTk):
         self.geometry(f"{GUIConfig.WINDOW_WIDTH}x{GUIConfig.WINDOW_HEIGHT}")
         self.configure(fg_color="#0d0d0d") # Very dark bg
 
-        # Components
-        self.brain = ShipraBrain()
-        self.audio = ShipraAudio()
+        # Components (Singleton)
+        self.brain = Systems.get_brain()
+        self.audio = Systems.get_audio()
         
         # State
         self.is_processing = False # True when Thinking OR Speaking
@@ -140,13 +139,31 @@ class ShipraGUI(ctk.CTk):
             self, height=80, corner_radius=10, 
             fg_color="#1a1a1a", text_color="#eee", font=("Roboto", 14)
         )
-        self.chat_display.grid(row=2, column=0, padx=50, pady=(0, 20), sticky="ew")
+        self.chat_display.grid(row=2, column=0, padx=50, pady=(0, 10), sticky="ew")
         self.chat_display.insert("0.0", "System: Voice Mode Initialized. Listening...\n")
         self.chat_display.configure(state="disabled")
 
+        # 3.5 Text Input Area
+        self.input_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.input_frame.grid(row=3, column=0, padx=50, pady=(0, 10), sticky="ew")
+        
+        self.msg_entry = ctk.CTkEntry(
+            self.input_frame, placeholder_text="Type your message here...",
+            font=("Arial", 14), height=40
+        )
+        self.msg_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        self.msg_entry.bind("<Return>", self.on_send_press)
+        
+        self.send_btn = ctk.CTkButton(
+            self.input_frame, text="SEND", width=100, height=40,
+            font=("Arial", 12, "bold"), fg_color="#1f6feb",
+            command=self.on_send_press
+        )
+        self.send_btn.pack(side="right")
+        
         # 4. Controls (Volume & Mute)
         self.control_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.control_frame.grid(row=3, column=0, pady=30)
+        self.control_frame.grid(row=4, column=0, pady=20)
         
         self.status_label = ctk.CTkLabel(
             self.control_frame, text="Listening...", 
@@ -205,6 +222,13 @@ class ShipraGUI(ctk.CTk):
             self.status_label.configure(text="Listening...", text_color="#00FF00")
             self.visualizer.configure(bg="#0d0d0d") # Normal
             self.audio.set_volume(self.volume_slider.get())  # Restore volume
+
+    def on_send_press(self, event=None):
+        """Handle Manual Text Submission"""
+        text = self.msg_entry.get().strip()
+        if text:
+            self.msg_entry.delete(0, "end")
+            self.process_input(text)
 
     def add_message(self, text, sender="User"):
         self.chat_display.configure(state="normal")

@@ -1,34 +1,40 @@
 import asyncio
 import os
 import threading
+import io
 import pygame
 import speech_recognition as sr
-from langdetect import detect
+import numpy as np
+import whisper
 import edge_tts
+from langdetect import detect
 
 class ShipraAudio:
     def __init__(self):
+        # STT Setup
         self.recognizer = sr.Recognizer()
-        self.recognizer.energy_threshold = 400  # Better voice detection
-        self.recognizer.dynamic_energy_threshold = True  # Auto-adjust
-        self.recognizer.pause_threshold = 0.8  # Shorter pause detection
-        pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=1024)  # Stable settings
-        self.volume = 0.7  # Default volume
+        self.recognizer.energy_threshold = 400
+        self.recognizer.dynamic_energy_threshold = True
+        self.recognizer.pause_threshold = 0.8
+        
+        print("Loading Whisper Model (Tiny)...")
+        self.stt_model = whisper.load_model("tiny")
+        print("Whisper Loaded (Tiny).")
+
+        # Audio Output Setup
+        try:
+            pygame.mixer.init()
+        except Exception as e:
+            print(f"Audio Init Warning: {e}")
+            
+        self.volume = 1.0
         self.lock = threading.Lock()
-        print("Audio initialized for continuous operation")
 
     def normalize_text(self, text):
-        """Fixes pronunciation and abbreviations."""
         replacements = {
             "AI": "Artificial Intelligence",
             "API": "A P I",
             "Shipra": "Ship-raa",
-            "Pushpak O2": "Pushpak O Two",
-            "Pushpaak O2": "Pushpak O Two",
-            "Pushpak O 2": "Pushpak O Two",
-            "Pushpaak O 2": "Pushpak O Two",
-            "Pushpak": "Pushpak",
-            "Pushpaak": "Pushpak",
             "OK": "Okay",
             "ok": "okay"
         }
@@ -37,7 +43,6 @@ class ShipraAudio:
         return text
 
     def detect_language(self, text):
-        """Detects if text is Hindi (hi) or English (en)."""
         try:
             lang = detect(text)
             return "hi" if lang == "hi" else "en"
@@ -45,24 +50,45 @@ class ShipraAudio:
             return "en"
 
     def listen(self):
-        """Continuous listening with proper loop support."""
-        with sr.Microphone() as source:
+        """
+        Listens to microphone, converts to numpy, and uses Whisper.
+        Bypasses FFmpeg file read issues.
+        """
+        with sr.Microphone(sample_rate=16000) as source:
+            # print("Listening (Whisper)...") # Verbose off
             try:
                 self.recognizer.adjust_for_ambient_noise(source, duration=0.3)
-                audio = self.recognizer.listen(source, timeout=1, phrase_time_limit=5)
-                text = self.recognizer.recognize_google(audio)
-                return text.strip() if text else None
+                # Capture Audio
+                audio = self.recognizer.listen(source, timeout=1, phrase_time_limit=8)
+                
+                # Convert to Numpy for Whisper (Bypass FFmpeg)
+                # Get raw data: 16-bit PCM, 16kHz (set in Microphone)
+                raw_data = audio.get_raw_data(convert_rate=16000, convert_width=2)
+                
+                # Convert byte buffer to numpy float32 array
+                np_audio = np.frombuffer(raw_data, dtype=np.int16).astype(np.float32) / 32768.0
+                
+                # Transcribe
+                result = self.stt_model.transcribe(np_audio, fp16=False) # fp16=False for compatibility
+                text = result["text"].strip()
+                
+                if not text: return None
+                return text
+
             except (sr.WaitTimeoutError, sr.UnknownValueError):
                 return None
-            except Exception:
+            except Exception as e:
+                print(f"STT Error: {e}")
                 return None
 
     async def _generate_edge_tts(self, text, lang):
         """Generate TTS to memory buffer."""
         voice = "hi-IN-SwaraNeural" if lang == "hi" else "en-IN-NeerjaNeural"
-        communicate = edge_tts.Communicate(text, voice, rate="+10%")
         
-        # Generate to bytes buffer instead of file
+        # Speed up slightly for conversational flow
+        communicate = edge_tts.Communicate(text, voice, rate="+5%")
+        
+        # Stream to bytes
         audio_data = b""
         async for chunk in communicate.stream():
             if chunk["type"] == "audio":
@@ -70,17 +96,13 @@ class ShipraAudio:
         
         return audio_data
 
-    def set_volume(self, volume):
-        """Set audio volume (0.0 to 1.0)."""
-        self.volume = max(0.0, min(1.0, volume))
-        pygame.mixer.music.set_volume(self.volume)
-
     def speak(self, text, on_start=None, on_end=None):
         def play_thread():
             with self.lock:
                 try:
                     lang = self.detect_language(text)
                     clean_text = self.normalize_text(text)
+                    print(f"Shipra ({lang}): {clean_text}")
                     
                     # Generate audio to memory
                     audio_data = asyncio.run(self._generate_edge_tts(clean_text, lang))
@@ -88,20 +110,18 @@ class ShipraAudio:
                     if on_start: on_start()
                     
                     # Play from memory buffer
-                    import io
-                    audio_buffer = io.BytesIO(audio_data)
-                    pygame.mixer.music.load(audio_buffer)
+                    pygame.mixer.music.load(io.BytesIO(audio_data))
                     pygame.mixer.music.set_volume(self.volume)
                     pygame.mixer.music.play()
                     
                     while pygame.mixer.music.get_busy():
                         pygame.time.wait(50)
-                    
+                        
                 except Exception as e:
                     print(f"Audio Error: {e}")
                 finally:
                     try:
-                        pygame.mixer.music.stop()
+                        pygame.mixer.music.unload()
                     except: pass
                     if on_end: on_end()
 
