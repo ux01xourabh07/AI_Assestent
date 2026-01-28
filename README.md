@@ -1,93 +1,60 @@
-# Shipra AI Voice Assistant 🤖
+# Shipra AI Assistant 🤖
 
-Shipra is a conversational AI Voice Assistant built with Python, designed to be a friendly, human-like companion. It understands and speaks in **Hinglish** (a mix of Hindi and English), making it perfect for Indian users. It uses Google's **Gemini AI** for intelligence and **Edge TTS** for natural-sounding speech.
+**Proprietary AI System by PushpakO2**
 
-## 🌟 Features
+Shipra (now also supporting a **Male Persona**) is a highly advanced, local-first AI assistant designed for speed, privacy, and Indian context efficiency. It runs completely locally (except for Speech Recognition) using **Ollama (Llama 3.2)** and **ChromaDB**.
 
-- **Human-like Persona**: Shipra behaves like a friend, not a robot. She speaks casually, uses filler words ("Accha", "Haan"), and respects cultural greetings ("Jay Shree Ram", "Namaste").
-- **Hinglish Support**: Fully capable of understanding and replying in a mix of Hindi and English.
-- **Natural Voice**: Uses `hi-IN-SwaraNeural` voice for realistic Indian pronunciation.
-- **Dark Mode UI**: A modern, sleek dark-themed interface built with `CustomTkinter`.
-- **Hold-to-Speak**: Simple "Walkie-Talkie" style interaction to avoid accidental activations.
-- **Smart Error Handling**: Displays specific error messages on screen for easy debugging.
+## 🚀 Key Features
+
+*   **Intelligence**: Powered by **Llama 3.2 (1B)** via Ollama. Fast, smart, and efficient.
+*   **Knowledge Base (RAG)**: Trained on **PushpakO2** internal data. Ask "Pushpak O2 kya hai?" to see it in action.
+*   **Voice**:
+    *   **Input**: Google Speech Recognition (Fast & Accurate).
+    *   **Output**: Edge TTS (`hi-IN-MadhurNeural` for Male, `hi-IN-SwaraNeural` for Female) for perfect **Hinglish** pronunciation.
+*   **Persona**:
+    *   **Gender**: Male (current active) / Female (switchable).
+    *   **Tone**: Professional, Ethical, Smart, and fluent in **Roman Hinglish**.
+*   **GUI**: Modern Dark Theme UI with Real-time Audio Visualizer and Mic Toggle.
 
 ## 🛠️ Prerequisites
 
-- **Python 3.8+** installed on your system.
-- A **Google Gemini API Key** (Get it from [Google AI Studio](https://aistudio.google.com/)).
+1.  **Ollama**: Must be installed and running.
+    *   Model: `ollama pull llama3.2:1b`
+    *   Embeddings: `ollama pull nomic-embed-text`
+2.  **Python 3.10+**
 
 ## 📦 Installation
 
-1.  **Clone the Repository** (or download the files):
-    ```bash
-    git clone <repository-url>
-    cd Shipra-AI
-    ```
-
-2.  **Install Dependencies**:
+1.  **Install Python Dependencies**:
     ```bash
     pip install -r requirements.txt
     ```
-    *Note: You may need to install `PyAudio` separately if pip fails. On Windows, `pip install pipwin && pipwin install pyaudio` often works.*
 
-## ⚙️ Configuration
+2.  **Setup Knowledge Base**:
+    *   Keep your documents (PDF, MD, JSON, TXT) in the `data/` folder.
+    *   Shipra will learn them automatically or via `/train` command.
 
-1.  Create a file named `.env` in the project root directory.
-2.  Add your Gemini API Key to it:
-    ```env
-    GEMINI_API_KEY=your_actual_api_key_here
-    ```
+## 🏃‍♂️ How to Run
 
-## 🚀 How to Run
-
-1.  Run the main application:
+1.  **Start the Assistant**:
     ```bash
     python main.py
     ```
-2.  The application window will open.
-3.  **Click and Hold** the big green button to speak.
-4.  **Release** the button to send your voice command.
-5.  Shipra will think and reply with both text and voice.
+2.  **Interact**:
+    *   **Voice**: System listens automatically. Click "MIC ON/OFF" to toggle privacy.
+    *   **Text**: Type in the box and hit ENTER.
 
-## 📁 Project Structure
+## 🧠 Brain Architecture
 
-- `main.py`: The core application file containing UI, Voice Logic, and AI integration.
-- `requirements.txt`: List of required Python libraries.
-- `.env`: Configuration file for keeping your API Key safe (do not commit this file!).
-- `list_voices.py`: A utility script to check available TTS voices on your system.
+*   **`main.py`**: Unified entry point (GUI + API).
+*   **`brain.py`**: The "Mind". Handles Logic, RAG (Memory), and Persona (LangChain).
+*   **`audio.py`**: The "Ears & Mouth". Handles Speech-to-Text (Google) and Text-to-Speech (Edge).
+*   **`systems.py`**: Singleton manager to ensure efficient resource usage.
 
 ## 🔧 Troubleshooting
 
-- **Microphone Error**: Ensure your microphone is connected and allowed in Windows Privacy settings.
-- **Audio Init Error**: If audio fails, try installing `ffmpeg` and adding it to your system PATH.
-- **Gemini API Error**: Check your `.env` file and ensure the API Key is valid and has active quota.
-- **Window not showing**: Ensure `customtkinter` is installed correctly.
+*   **"Port 5000 Error"**: Close any old running python terminals.
+*   **"Ollama Error"**: Ensure Ollama app is running in the background.
 
-## � Git Workflow
-
-Useful commands for managing the project:
-
-- **Update Project (Pull)**: Get the latest changes from the server/repo.
-  ```bash
-  git pull origin main
-  ```
-
-- **Check Changes**: See what files you have modified.
-  ```bash
-  git status
-  ```
-
-- **Save Changes (Commit)**:
-  ```bash
-  git add .
-  git commit -m "Updated features"
-  ```
-
-- **Upload Changes (Push)**:
-  ```bash
-  git push origin main
-  ```
-
-## �🛡️ License
-
-This project is created by **PushpakO2**. Feel free to use and modify!
+---
+**Created by PushpakO2** 🇮🇳

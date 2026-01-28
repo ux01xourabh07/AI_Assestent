@@ -1,25 +1,26 @@
-# Environment variables
-.env
-
 # Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
+*.py[cod]
+*$py.class
 *.so
-
-# Virtual environment
-venv/
+.Python
 env/
-ENV/
+venv/
+.env
 
-# IDE
+# Distribution / Packaging
+build/
+dist/
+*.egg-info/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# VS Code
 .vscode/
-.idea/
-*.swp
-*.swo
 
-# OS
-.DS_Store
-Thumbs.db
+# Project Specific
+chroma_db/
+**/chroma_db/
+logs/
+temp/

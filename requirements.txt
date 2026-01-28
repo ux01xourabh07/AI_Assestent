@@ -9,7 +9,6 @@ fastapi
 uvicorn
 requests
 numpy
-openai-whisper
 langdetect
 langchain
 langchain-ollama
@@ -19,4 +18,3 @@ chromadb
 unstructured
 markdown
 pypdf
-jq
