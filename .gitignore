@@ -1,0 +1,41 @@
+# Environment variables
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Audio files
+*.mp3
+*.wav
+response.mp3
+temp_input.wav
+
+# Database
+chroma_db/
+*.sqlite3
+
+# Logs
+*.log
+
+# Temporary files
+temp_*

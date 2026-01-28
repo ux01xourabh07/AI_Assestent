@@ -1,0 +1,18 @@
+# Core UI and Audio
+customtkinter
+SpeechRecognition
+pyaudio
+pygame
+edge-tts
+langdetect
+
+# LangChain and Vector Store (optimized)
+langchain
+langchain-ollama
+langchain-community
+chromadb
+
+# Optional utilities
+python-dotenv
+requests
+pypdf
