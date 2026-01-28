@@ -1,18 +1,10 @@
-# Core UI and Audio
 customtkinter
 SpeechRecognition
 pyaudio
-pygame
-edge-tts
-langdetect
-
-# LangChain and Vector Store (optimized)
-langchain
-langchain-ollama
-langchain-community
-chromadb
-
-# Optional utilities
+google-generativeai
 python-dotenv
+edge-tts
+pygame
+fastapi
+uvicorn
 requests
-pypdf
