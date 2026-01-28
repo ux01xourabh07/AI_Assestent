@@ -17,9 +17,9 @@ class ShipraAudio:
         self.recognizer.dynamic_energy_threshold = True
         self.recognizer.pause_threshold = 0.8
         
-        print("Loading Whisper Model (Tiny)...")
-        self.stt_model = whisper.load_model("tiny")
-        print("Whisper Loaded (Tiny).")
+        print("STT: Using Google Speech Recognition")
+        # self.stt_model = whisper.load_model("tiny") # Disabled for SR
+        print("Audio System Ready.")
 
         # Audio Output Setup
         try:
@@ -29,6 +29,16 @@ class ShipraAudio:
             
         self.volume = 1.0
         self.lock = threading.Lock()
+
+    def set_volume(self, volume):
+        """Sets the volume for the audio output."""
+        try:
+            self.volume = float(volume)
+            # Apply immediately if music is playing
+            if pygame.mixer.get_init():
+                pygame.mixer.music.set_volume(self.volume)
+        except Exception as e:
+            print(f"Error setting volume: {e}")
 
     def normalize_text(self, text):
         replacements = {
@@ -57,36 +67,29 @@ class ShipraAudio:
         with sr.Microphone(sample_rate=16000) as source:
             # print("Listening (Whisper)...") # Verbose off
             try:
-                self.recognizer.adjust_for_ambient_noise(source, duration=0.3)
+                # self.recognizer.adjust_for_ambient_noise(source, duration=0.3)
+                
                 # Capture Audio
-                audio = self.recognizer.listen(source, timeout=1, phrase_time_limit=8)
+                audio = self.recognizer.listen(source, timeout=1, phrase_time_limit=5)
                 
-                # Convert to Numpy for Whisper (Bypass FFmpeg)
-                # Get raw data: 16-bit PCM, 16kHz (set in Microphone)
-                raw_data = audio.get_raw_data(convert_rate=16000, convert_width=2)
-                
-                # Convert byte buffer to numpy float32 array
-                np_audio = np.frombuffer(raw_data, dtype=np.int16).astype(np.float32) / 32768.0
-                
-                # Transcribe
-                result = self.stt_model.transcribe(np_audio, fp16=False) # fp16=False for compatibility
-                text = result["text"].strip()
-                
-                if not text: return None
-                return text
-
-            except (sr.WaitTimeoutError, sr.UnknownValueError):
-                return None
+                # Transcribe using Google Web Speech API (SR)
+                # Much faster and lighter than running local Whisper
+                try:
+                    text = self.recognizer.recognize_google(audio)
+                    return text
+                except sr.UnknownValueError:
+                    return None
             except Exception as e:
-                print(f"STT Error: {e}")
+                # print(f"Listening error: {e}")
                 return None
 
     async def _generate_edge_tts(self, text, lang):
         """Generate TTS to memory buffer."""
-        voice = "hi-IN-SwaraNeural" if lang == "hi" else "en-IN-NeerjaNeural"
+        # SwaraNeural handles both English and Roman-Hindi (Hinglish) beautifully.
+        voice = "hi-IN-MadhurNeural"
         
-        # Speed up slightly for conversational flow
-        communicate = edge_tts.Communicate(text, voice, rate="+5%")
+        # Natural conversational speed
+        communicate = edge_tts.Communicate(text, voice, rate="+0%")
         
         # Stream to bytes
         audio_data = b""

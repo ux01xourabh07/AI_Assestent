@@ -91,20 +91,48 @@ class ShipraGUI(ctk.CTk):
         self.geometry(f"{GUIConfig.WINDOW_WIDTH}x{GUIConfig.WINDOW_HEIGHT}")
         self.configure(fg_color="#0d0d0d") # Very dark bg
 
-        # Components (Singleton)
-        self.brain = Systems.get_brain()
-        self.audio = Systems.get_audio()
+        # Components (Initialized asynchronously)
+        self.brain = None
+        self.audio = None
         
         # State
-        self.is_processing = False # True when Thinking OR Speaking
+        self.is_processing = False 
         self.is_muted = False
         self.is_running = True
+        self.is_ready = False  # New flag
 
         self._init_ui()
         self._update_time()
         
-        # Start Background Listening Loop
-        self.after(2000, self.start_continuous_listening)
+        # Start Initialization in Background
+        self.after(100, self.start_initialization)
+
+    def start_initialization(self):
+        """Loads heavy systems in background so GUI doesn't freeze."""
+        threading.Thread(target=self._load_systems, daemon=True).start()
+
+    def _load_systems(self):
+        self.after(0, lambda: self.status_label.configure(text="Initializing AI Systems... (Please Wait)", text_color="orange"))
+        
+        # Load Systems (This triggers the lazy imports)
+        self.brain = Systems.get_brain()
+        self.audio = Systems.get_audio()
+        
+        self.is_ready = True
+        self.after(0, lambda: self.status_label.configure(text="System Ready. Listening...", text_color="#00FF00"))
+        self.after(0, lambda: self.chat_display.insert("end", "System: AI Models Loaded. Ready!\n"))
+        
+        # Speak Startup Intro (User Request)
+        intro_text = "Jay Shree Ram! Main PushpakO2 dwara banaya gaya ek smart AI Assistant hoon. Main apki kya madad kar sakta hoon?"
+        self.after(100, lambda: self.add_message(intro_text, "Shipra"))
+        threading.Thread(target=lambda: self.audio.speak(
+            intro_text, 
+            on_start=lambda: self.visualizer.set_speaking(True),
+            on_end=lambda: self._on_speaking_finished()
+        ), daemon=True).start()
+        
+        # Start Listening Loop
+        self.start_continuous_listening()
 
     def _init_ui(self):
         # Grid layout
@@ -187,12 +215,12 @@ class ShipraGUI(ctk.CTk):
         self.volume_label = ctk.CTkLabel(self.volume_frame, text="70%", font=("Arial", 12))
         self.volume_label.pack(side="left")
 
-        self.mute_btn = ctk.CTkButton(
-            self.control_frame, text="MUTE", width=200, height=50, 
-            corner_radius=25, fg_color="red", hover_color="#8B0000",
-            font=("Arial", 18, "bold"), command=self.toggle_mute
+        self.mic_btn = ctk.CTkButton(
+            self.control_frame, text="MIC ON", width=200, height=50, 
+            corner_radius=25, fg_color="green", hover_color="#006400",
+            font=("Arial", 18, "bold"), command=self.toggle_mic
         )
-        self.mute_btn.pack()
+        self.mic_btn.pack()
 
     def _update_time(self):
         now = datetime.now()
@@ -208,23 +236,28 @@ class ShipraGUI(ctk.CTk):
         """Handle volume slider changes."""
         volume_percent = int(value * 100)
         self.volume_label.configure(text=f"{volume_percent}%")
-        self.audio.set_volume(value)
+        if self.audio:
+            self.audio.set_volume(value)
 
-    def toggle_mute(self):
-        self.is_muted = not self.is_muted
-        if self.is_muted:
-            self.mute_btn.configure(text="UNMUTE", fg_color="green", hover_color="#006400")
-            self.status_label.configure(text="Microphone Muted", text_color="red")
+    def toggle_mic(self):
+        if not self.is_ready: return
+        self.is_muted = not self.is_muted # Reusing is_muted flag as is_mic_off
+        
+        if self.is_muted: # Mic OFF
+            self.mic_btn.configure(text="MIC OFF", fg_color="red", hover_color="#8B0000")
+            self.status_label.configure(text="Microphone Off", text_color="red")
             self.visualizer.configure(bg="#1a0505") # Reddish tint
-            self.audio.set_volume(0)  # Mute audio
-        else:
-            self.mute_btn.configure(text="MUTE", fg_color="red", hover_color="#8B0000")
+            # Optional: Stop Audio output too if desired, but user said "Mic Off"
+            # self.audio.set_volume(0) 
+        else: # Mic ON
+            self.mic_btn.configure(text="MIC ON", fg_color="green", hover_color="#006400")
             self.status_label.configure(text="Listening...", text_color="#00FF00")
             self.visualizer.configure(bg="#0d0d0d") # Normal
-            self.audio.set_volume(self.volume_slider.get())  # Restore volume
+            # self.audio.set_volume(self.volume_slider.get())
 
     def on_send_press(self, event=None):
         """Handle Manual Text Submission"""
+        if not self.is_ready: return
         text = self.msg_entry.get().strip()
         if text:
             self.msg_entry.delete(0, "end")
@@ -242,8 +275,8 @@ class ShipraGUI(ctk.CTk):
     def _listening_loop(self):
         print("Starting continuous listening loop")
         while self.is_running:
-            if self.is_muted or self.is_processing:
-                pygame.time.wait(300)  # Reasonable wait
+            if not self.is_ready or self.is_muted or self.is_processing:
+                pygame.time.wait(300)
                 continue
 
             try:
