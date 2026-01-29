@@ -1,7 +1,6 @@
 customtkinter
 SpeechRecognition
 pyaudio
-video
 python-dotenv
 edge-tts
 pygame
@@ -18,3 +17,4 @@ chromadb
 unstructured
 markdown
 pypdf
+openai-whisper

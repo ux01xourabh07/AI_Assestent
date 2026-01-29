@@ -3,7 +3,7 @@ import os
 class Config:
     # AI Models
     MODEL_NAME = "llama3.2:1b"       # 1 Billion Parameters (Fast & Efficient)
-    BASE_URL = "http://localhost:11434"
+    BASE_URL = "http://192.168.29.28:11434"
     
     # Embedding Model
     EMBEDDING_MODEL_NAME = "nomic-embed-text"
