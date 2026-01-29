@@ -1,26 +1,20 @@
 import os
-import signal
+import sys
+from PyQt6.QtWidgets import QApplication
 from gui import ShipraGUI
 from config import Config
-from systems import Systems
 
 def main():
-    print("Launching Shipra AI System...")
+    print("Launching Shipra AI System (PyQt6)...")
     Config.ensure_directories()
     
-    # Start GUI properly on Main Thread
-    print("Starting GUI...")
-    gui = ShipraGUI()
+    app = QApplication(sys.argv)
     
-    # Handle graceful exit
-    def on_close():
-        print("Shutting down Shipra AI...")
-        gui.is_running = False # Flags listener loops to stop
-        gui.destroy()
-        os._exit(0) 
-
-    gui.protocol("WM_DELETE_WINDOW", on_close)
-    gui.mainloop()
+    print("Starting GUI...")
+    window = ShipraGUI()
+    window.show()
+    
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     main()

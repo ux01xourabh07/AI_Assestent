@@ -118,7 +118,8 @@ class ShipraAudio:
         print(f"[Audio] Generating TTS (Voice: {voice})...")
         
         try:
-            communicate = edge_tts.Communicate(text, voice, rate="+0%")
+            # Adjusting Pitch (-5Hz) and Rate/BPM (+10%) as requested
+            communicate = edge_tts.Communicate(text, voice, rate="+10%", pitch="-5Hz")
             audio_data = b""
             async for chunk in communicate.stream():
                 if chunk["type"] == "audio":
