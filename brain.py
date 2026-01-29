@@ -15,7 +15,7 @@ class ShipraBrain:
         self.llm = OllamaLLM(
             model=Config.MODEL_NAME, 
             base_url=Config.BASE_URL,
-            temperature=0.7
+            temperature=0.3
         )
         
         # Initialize Memory (RAG)

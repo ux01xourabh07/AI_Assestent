@@ -194,6 +194,8 @@ class ListenWorker(QThread):
             try:
                 text = audio.listen()
                 if text:
+                    # Auto-pause immediately to prevent re-entry/race conditions
+                    self.paused = True 
                     self.text_heard.emit(text)
             except Exception:
                 pass
@@ -422,11 +424,12 @@ class ShipraGUI(QMainWindow):
         
         # Start Listen Thread
         self.listen_thread = ListenWorker()
+        self.listen_thread.paused = True # Start paused to speak intro first
         self.listen_thread.text_heard.connect(self.process_input)
         self.listen_thread.start()
         
-        # Initial Greeting
-        intro = "Jay Shree Ram! Main PushpakO2 dwara banaya gaya ek smart AI Assistant hoon."
+        # Initial Greeting (Female Persona)
+        intro = "Jay Shree Ram! Main PushpakO2 dwara banai gayi ek smart AI Assistant hoon. Main apki kya madad kar sakti hoon?"
         self.add_message("Shipra", intro)
         self.speak(intro)
 
@@ -477,9 +480,9 @@ class ShipraGUI(QMainWindow):
         self.visualizer.set_speaking(False)
         # Resume listening if not manually muted
         if not self.mic_btn.isChecked():
-            self.status_label.setText("Listening...")
-            self.status_label.setStyleSheet("color: #00ff00;")
-            if self.listen_thread: self.listen_thread.paused = False
+            self.status_label.setText("Listening Paused")
+            self.status_label.setStyleSheet("color: orange;")
+            # self.listen_thread.paused = False # CONTINUOUS MODE DISABLED
         else:
             self.status_label.setText("Microphone Off")
             self.status_label.setStyleSheet("color: red;")

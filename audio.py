@@ -41,8 +41,8 @@ class ShipraAudio:
         self.lock = threading.Lock()
         
         # Voice Tuning Parameters
-        self.voice_pitch = "+0Hz"  # Default for Female
-        self.voice_rate = "+10%"   # Default
+        self.voice_pitch = "-10Hz"  # Default for Female
+        self.voice_rate = "+25%"   # Default
 
     def set_volume(self, volume):
         """Sets the volume for the audio output."""
