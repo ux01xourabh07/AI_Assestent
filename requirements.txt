@@ -4,17 +4,12 @@ pyaudio
 python-dotenv
 edge-tts
 pygame
-fastapi
-uvicorn
-requests
 numpy
-langdetect
 langchain
 langchain-ollama
 langchain-chroma
 langchain-community
 chromadb
-unstructured
 markdown
 pypdf
 openai-whisper

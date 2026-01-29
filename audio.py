@@ -107,13 +107,15 @@ class ShipraAudio:
 
     async def _generate_edge_tts(self, text, lang):
         """Generate TTS to memory buffer."""
-        # Multi-lingual voice support
-        voice = "hi-IN-MadhurNeural" # Defaults to a voice good for Hinglish
-        if lang == "en":
-             # Use a clear English voice if purely English is detected/forced
-             voice = "en-US-AriaNeural"
+        # Using 'en-IN-PrabhatNeural' as the Primary Voice.
+        # This voice is a "Polyglot" - it reads English in Indian Accent AND Hindi in Hindi Accent.
+        # It handles code-switching (Hinglish) much better than switching voices per sentence.
+        voice = "en-IN-PrabhatNeural" 
+        
+        # If the text is purely Hindi script (Devanagari), it handles it naturally.
+        # If the text is Roman Hindi (Hinglish), it reads it with the correct Indian accent.
 
-        print(f"[Audio] Generating TTS (Lang: {lang}, Voice: {voice})...")
+        print(f"[Audio] Generating TTS (Voice: {voice})...")
         
         try:
             communicate = edge_tts.Communicate(text, voice, rate="+0%")

@@ -3,9 +3,9 @@ import glob
 from langchain_community.document_loaders import (
     TextLoader,
     CSVLoader,
-    UnstructuredMarkdownLoader,
     PyPDFLoader
 )
+from langchain_core.documents import Document
 
 class ShipraLoader:
     
@@ -29,18 +29,18 @@ class ShipraLoader:
                         loader = CSVLoader(full_path, encoding="utf-8")
                         documents.extend(loader.load())
                     elif ext == ".md":
-                        loader = UnstructuredMarkdownLoader(full_path)
-                        documents.extend(loader.load())
+                        # Optimized: Read markdown as plain text to avoid 'unstructured' dependency
+                        with open(full_path, "r", encoding="utf-8") as f:
+                            content = f.read()
+                        documents.append(Document(page_content=content, metadata={"source": full_path}))
                     elif ext == ".pdf":
                         loader = PyPDFLoader(full_path)
                         documents.extend(loader.load())
                     elif ext == ".json":
-                        # Use simple JSON loader to avoid 'jq' dependency issues on Windows
+                        # Use simple JSON loader
                         import json
-                        from langchain_core.documents import Document
                         with open(full_path, 'r', encoding='utf-8') as f:
                             data = json.load(f)
-                        # Flatten or just dump string
                         content = json.dumps(data, indent=2)
                         documents.append(Document(page_content=content, metadata={"source": full_path}))
                 except Exception as e:
