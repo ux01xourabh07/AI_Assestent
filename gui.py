@@ -309,10 +309,10 @@ class ShipraGUI(QMainWindow):
         
         # Pitch
         pitch_row = QHBoxLayout()
-        self.pitch_label = QLabel("Pitch: -5 Hz")
+        self.pitch_label = QLabel("Pitch: 0 Hz")
         self.pitch_slider = QSlider(Qt.Orientation.Horizontal)
         self.pitch_slider.setRange(-50, 50)
-        self.pitch_slider.setValue(-5)
+        self.pitch_slider.setValue(0)
         self.pitch_slider.setFixedWidth(150)
         self.pitch_slider.valueChanged.connect(self.on_voice_params_change)
         pitch_row.addWidget(QLabel("Pitch:"))

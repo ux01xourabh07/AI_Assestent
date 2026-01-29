@@ -41,7 +41,7 @@ class ShipraAudio:
         self.lock = threading.Lock()
         
         # Voice Tuning Parameters
-        self.voice_pitch = "-5Hz"  # Default
+        self.voice_pitch = "+0Hz"  # Default for Female
         self.voice_rate = "+10%"   # Default
 
     def set_volume(self, volume):
@@ -118,8 +118,8 @@ class ShipraAudio:
 
     async def _generate_edge_tts(self, text, lang):
         """Generate TTS to memory buffer."""
-        # Using 'en-IN-PrabhatNeural' as the Primary Voice.
-        voice = "en-IN-PrabhatNeural" 
+        # Using 'en-IN-NeerjaNeural' as the Primary Voice (Female).
+        voice = "en-IN-NeerjaNeural" 
         
         print(f"[Audio] Generating TTS (Voice: {voice}, Pitch: {self.voice_pitch}, Rate: {self.voice_rate})...")
         
