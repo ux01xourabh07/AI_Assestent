@@ -302,6 +302,41 @@ class ShipraGUI(QMainWindow):
         self.mic_btn.setFixedHeight(50)
         self.mic_btn.clicked.connect(self.toggle_mic)
         
+        
+        # Voice Controls
+        voice_layout = QVBoxLayout()
+        voice_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Pitch
+        pitch_row = QHBoxLayout()
+        self.pitch_label = QLabel("Pitch: -5 Hz")
+        self.pitch_slider = QSlider(Qt.Orientation.Horizontal)
+        self.pitch_slider.setRange(-50, 50)
+        self.pitch_slider.setValue(-5)
+        self.pitch_slider.setFixedWidth(150)
+        self.pitch_slider.valueChanged.connect(self.on_voice_params_change)
+        pitch_row.addWidget(QLabel("Pitch:"))
+        pitch_row.addWidget(self.pitch_slider)
+        pitch_row.addWidget(self.pitch_label)
+        
+        # Rate
+        rate_row = QHBoxLayout()
+        self.rate_label = QLabel("Speed: +10 %")
+        self.rate_slider = QSlider(Qt.Orientation.Horizontal)
+        self.rate_slider.setRange(-50, 50)
+        self.rate_slider.setValue(10)
+        self.rate_slider.setFixedWidth(150)
+        self.rate_slider.valueChanged.connect(self.on_voice_params_change)
+        rate_row.addWidget(QLabel("Speed:"))
+        rate_row.addWidget(self.rate_slider)
+        rate_row.addWidget(self.rate_label)
+        
+        voice_layout.addLayout(pitch_row)
+        voice_layout.addLayout(rate_row)
+        
+        control_layout.addLayout(voice_layout)
+        control_layout.addSpacing(20)
+
         control_layout.addWidget(QLabel("Volume:"))
         control_layout.addWidget(self.volume_slider)
         control_layout.addWidget(self.volume_label)
@@ -348,6 +383,16 @@ class ShipraGUI(QMainWindow):
         self.volume_label.setText(f"Volume: {value}%")
         if self.is_ready:
             Systems.get_audio().set_volume(value / 100.0)
+
+    def on_voice_params_change(self):
+        pitch = self.pitch_slider.value()
+        rate = self.rate_slider.value()
+        
+        self.pitch_label.setText(f"Pitch: {pitch} Hz")
+        self.rate_label.setText(f"Speed: {rate:+d} %")
+        
+        if self.is_ready:
+            Systems.get_audio().set_voice_params(pitch, rate)
 
     def toggle_mic(self):
         is_muted = self.mic_btn.isChecked()

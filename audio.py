@@ -39,6 +39,10 @@ class ShipraAudio:
             
         self.volume = 1.0
         self.lock = threading.Lock()
+        
+        # Voice Tuning Parameters
+        self.voice_pitch = "-5Hz"  # Default
+        self.voice_rate = "+10%"   # Default
 
     def set_volume(self, volume):
         """Sets the volume for the audio output."""
@@ -50,6 +54,13 @@ class ShipraAudio:
             print(f"[Audio] Volume set to: {self.volume}")
         except Exception as e:
             print(f"[Audio] Error setting volume: {e}")
+            
+    def set_voice_params(self, pitch_hz, rate_percent):
+        """Sets dynamic voice parameters."""
+        # Convert numeric values to strings expected by EdgeTTS
+        self.voice_pitch = f"{pitch_hz:+d}Hz"
+        self.voice_rate = f"{rate_percent:+d}%"
+        print(f"[Audio] Voice Params Updated -> Pitch: {self.voice_pitch}, Rate: {self.voice_rate}")
 
     def normalize_text(self, text):
         replacements = {
@@ -108,18 +119,13 @@ class ShipraAudio:
     async def _generate_edge_tts(self, text, lang):
         """Generate TTS to memory buffer."""
         # Using 'en-IN-PrabhatNeural' as the Primary Voice.
-        # This voice is a "Polyglot" - it reads English in Indian Accent AND Hindi in Hindi Accent.
-        # It handles code-switching (Hinglish) much better than switching voices per sentence.
         voice = "en-IN-PrabhatNeural" 
         
-        # If the text is purely Hindi script (Devanagari), it handles it naturally.
-        # If the text is Roman Hindi (Hinglish), it reads it with the correct Indian accent.
-
-        print(f"[Audio] Generating TTS (Voice: {voice})...")
+        print(f"[Audio] Generating TTS (Voice: {voice}, Pitch: {self.voice_pitch}, Rate: {self.voice_rate})...")
         
         try:
-            # Adjusting Pitch (-5Hz) and Rate/BPM (+10%) as requested
-            communicate = edge_tts.Communicate(text, voice, rate="+10%", pitch="-5Hz")
+            # Using dynamic voice parameters
+            communicate = edge_tts.Communicate(text, voice, rate=self.voice_rate, pitch=self.voice_pitch)
             audio_data = b""
             async for chunk in communicate.stream():
                 if chunk["type"] == "audio":
