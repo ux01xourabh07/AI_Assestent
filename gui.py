@@ -480,9 +480,9 @@ class ShipraGUI(QMainWindow):
         self.visualizer.set_speaking(False)
         # Resume listening if not manually muted
         if not self.mic_btn.isChecked():
-            self.status_label.setText("Listening Paused")
-            self.status_label.setStyleSheet("color: orange;")
-            # self.listen_thread.paused = False # CONTINUOUS MODE DISABLED
+            self.status_label.setText("Listening...")
+            self.status_label.setStyleSheet("color: #00ff00;")
+            self.listen_thread.paused = False # CONTINUOUS MODE ENABLED
         else:
             self.status_label.setText("Microphone Off")
             self.status_label.setStyleSheet("color: red;")

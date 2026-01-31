@@ -23,10 +23,10 @@ Pushpak O2 develops advanced aviation systems and intelligent platforms includin
 
 These technologies leverage sustainable hydrogen fuel cells and AI autonomy to enable zero-emission, long-range operations.
 
-## 4. Project Pushpak O2 - Technical Specifications
+## 4. "Pushpak" - The Vehicle (Technical Specifications)
 
 ### Vehicle Overview
-Project Pushpak O2 is an advanced futuristic aerial mobility vehicle designed for urban air transportation.
+"Pushpak" (by Pushpak O2) is an advanced futuristic drone-like aerial mobility vehicle designed for urban air transportation.
 
 ### Key Specifications
 - **Load Capacity**: 500 kilograms total

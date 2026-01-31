@@ -44,6 +44,15 @@ class ShipraAudio:
         self.voice_pitch = "-10Hz"  # Default for Female
         self.voice_rate = "+25%"   # Default
 
+        try:
+            # Perform initial noise adjustment
+            with sr.Microphone() as source:
+                print("[Audio] adjusting for ambient noise... (Please be quiet for 1s)")
+                self.recognizer.adjust_for_ambient_noise(source, duration=1.0)
+                print(f"[Audio] Threshold set to: {self.recognizer.energy_threshold}")
+        except Exception as e:
+            print(f"[Audio] Warning: Could not adjust for ambient noise: {e}")
+
     def set_volume(self, volume):
         """Sets the volume for the audio output."""
         try:
@@ -87,10 +96,11 @@ class ShipraAudio:
         Robust listening loop using SpeechRecognition.
         """
         with sr.Microphone() as source:
-            print("\n[Audio] Adjusting for ambient noise... (Please wait)")
-            self.recognizer.adjust_for_ambient_noise(source, duration=1.0)
-            print(f"[Audio] Threshold adjusted to: {self.recognizer.energy_threshold}")
-            print("[Audio] LISTENING... (Speak now)")
+            # Removed per-call adjustment to avoid delays/missed speech
+            # print("\n[Audio] Adjusting for ambient noise... (Please wait)")
+            # self.recognizer.adjust_for_ambient_noise(source, duration=0.5) 
+            
+            print(f"[Audio] LISTENING... (Threshold: {self.recognizer.energy_threshold})")
             
             try:
                 # Listen with timeouts
@@ -103,7 +113,7 @@ class ShipraAudio:
                     print(f"[Audio] USER SAID: '{text}'")
                     return text
                 except sr.UnknownValueError:
-                    print("[Audio] Creating transcript... (Could not understand audio)")
+                    print("[Audio] ... (Could not understand audio)")
                     return None
                 except sr.RequestError as e:
                     print(f"[Audio] API Error (Google Speech): {e}")
