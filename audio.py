@@ -44,7 +44,7 @@ class ShipraAudio:
             print(f"[Audio] Pygame Init Error: {e}")
 
         # Voice Settings
-        self.voice = "en-IN-NeerjaNeural"  # Default Indian English Female
+        self.voice = "en-IN-NeerjaNeural"  # Clear Indian English Female
         self.rate = "+0%"
         self.volume = "+0%"
         self.pitch = "+0Hz"
@@ -152,7 +152,7 @@ class ShipraAudio:
             self.voice, 
             rate="+25%",  # Increase speed by 25%
             volume=self.volume, 
-            pitch="-10%"  # Decrease pitch by 10%
+            pitch="-10Hz"  # Decrease pitch by 10Hz (not percentage)
         )
         await communicate.save(filename)
 
