@@ -1,110 +1,77 @@
 from config import Config
+import os
 
 class ShipraBrain:
     def __init__(self, domain="General Assistant"):
         self.domain = domain
-        self.knowledge_base = self.load_pushpak_data()
+        self.company_data = self.load_company_data()
+        self.vehicle_data = self.load_vehicle_data()
         
-        # Voice-first Hinglish AI Assistant responses
-        self.responses = {
-            "hello": "Namaste! Main Shipra hun, Pushpak O2 ki AI assistant. Kaise help kar sakti hun?",
-            "hi": "Hi! Main Shipra, aapki voice assistant. Kya chahiye?",
-            "good morning": "Good morning! Shipra here, ready to help.",
-            "good afternoon": "Good afternoon! Kaise assist kar sakti hun?",
-            "good evening": "Good evening! Kya help chahiye?",
-            
-            # Exit commands
-            "exit": "Theek hai, milte hain phir. Bye.",
-            "bye": "Theek hai, milte hain phir. Bye.",
-            "stop": "Theek hai, milte hain phir. Bye.",
-            
-            # Company Information
-            "pushpak o2": "Pushpak O2 ek Indian aerospace company hai jo indigenous aviation platforms banati hai.",
-            "company": "Humara focus complete in-house development pe hai with full IP control.",
-            
-            # Leadership - Professional Hinglish
-            "aneerudh": "Mr. Aneerudh Kumar hamare Co-Founder aur Technology Lead hain, engineering operations handle karte hain.",
-            "aditya": "Mr. Aditya Shrivastava hamare President aur Co-Founder hain, strategic direction dekhte hain.",
-            "leadership": "Humari team mein technical expertise aur business strategy dono balanced hai.",
-            
-            # Project Pushpak - Natural Hinglish
-            "pushpak": "Project Pushpak hamara flagship aerial vehicle hai - 500kg capacity with 4 persons seating.",
-            "capacity": "500 kilograms total load capacity hai hamare aerial vehicle mein.",
-            "seating": "1 pilot aur 3 passengers ke liye designed hai.",
-            
-            # Technology - Conversational
-            "technology": "Hum AI-enabled autonomous flight, hydrogen fuel cells, aur obstacle detection develop karte hain.",
-            "safety": "Safety hamari top priority hai with DGCA-compliant systems.",
-            "innovation": "Sustainable aviation technology pe focus hai with zero-emission operations.",
-            
-            # Business Assistance - Professional Hinglish
-            "meeting": "Meeting schedule karna hai? Main contact information provide kar sakti hun.",
-            "appointment": "Appointment ke liye main proper team se connect kar dungi.",
-            "demo": "Demo chahiye? Technical team se connect kar deti hun.",
-            "pricing": "Pricing details ke liye business development team se baat karni padegi.",
-            
-            # Voice Assistant Functions
-            "help": "Main Pushpak O2 ke baare mein sab kuch bata sakti hun. Kya jaanna chahte ho?",
-            "who are you": "Main Shipra hun, Pushpak O2 ki dedicated AI assistant. Voice-first interaction mein specialize karti hun.",
-            "unclear": "Thoda clear nahi sun paayi, ek baar phir bolo please.",
-            "confirm": "Ispe thoda confirm karna padega.",
-            "default": "Main Shipra, aapki AI assistant. Pushpak O2 ke aerospace innovations ke baare mein kuch bhi puch sakte hain."
-        }
-
-    def load_pushpak_data(self):
-        """Load data from both company and vehicle files."""
-        data = {}
+    def load_company_data(self):
+        """Load company information from Pushpak_Company.md"""
         try:
             with open("data/Pushpak_Company.md", "r", encoding="utf-8") as f:
-                data['company'] = f.read()
+                return f.read()
         except:
-            data['company'] = ""
-        
+            return ""
+    
+    def load_vehicle_data(self):
+        """Load vehicle information from Pushpak_Vehicle.md"""
         try:
             with open("data/Pushpak_Vehicle.md", "r", encoding="utf-8") as f:
-                data['vehicle'] = f.read()
+                return f.read()
         except:
-            data['vehicle'] = ""
+            return ""
+    
+    def analyze_query(self, user_input):
+        """Analyze user query and return relevant information"""
+        query = user_input.lower().strip()
         
-        return data
-
+        # Company-related queries
+        if any(word in query for word in ['company', 'pushpaak o 2', 'pushpak o2', 'leadership', 'president', 'aditya', 'aneerudh', 'location', 'bhopal', 'mission']):
+            return self.get_company_info(query)
+        
+        # Vehicle-related queries  
+        elif any(word in query for word in ['vehicle', 'pushpaak', 'aerial', 'drone', 'uas', 'features', 'technology', 'hydrogen', 'autonomous']):
+            return self.get_vehicle_info(query)
+        
+        # General greetings
+        elif any(word in query for word in ['hello', 'hi', 'namaste']):
+            return "Namaste! Main Shipra hun, Pushpaak O 2 ki AI assistant. Kaise help kar sakti hun?"
+        
+        # Exit commands
+        elif any(word in query for word in ['bye', 'exit', 'stop']):
+            return "Dhanyawad! Phir milte hain."
+        
+        else:
+            return "Main Pushpaak O 2 aur hamare aerial vehicles ke baare mein bata sakti hun. Kya jaanna chahte hain?"
+    
+    def get_company_info(self, query):
+        """Extract specific company information based on query"""
+        if 'president' in query or 'aditya' in query:
+            return "Mr. Aditya Shrivastava hamare President aur Co-Founder hain. Woh strategic vision aur governance handle karte hain."
+        elif 'aneerudh' in query or 'technology lead' in query:
+            return "Mr. Aneerudh Kumar hamare Co-Founder aur Technology Lead hain. Woh engineering aur systems architecture dekhte hain."
+        elif 'location' in query or 'bhopal' in query:
+            return "Pushpaak O 2 ka headquarters Bhopal, Madhya Pradesh mein hai."
+        elif 'mission' in query:
+            return "Hamara mission hai 100% indigenous aerospace innovation with DGCA compliance aur sustainable aviation solutions."
+        else:
+            return "Pushpaak O 2 ek Indian aerospace company hai jo indigenous aviation platforms aur unmanned aerial systems develop karti hai."
+    
+    def get_vehicle_info(self, query):
+        """Extract specific vehicle information based on query"""
+        if 'features' in query:
+            return "Pushpaak vehicle mein AI-enabled autonomous flight, real-time obstacle detection, hydrogen fuel cell power, aur zero-emission operations hai."
+        elif 'technology' in query:
+            return "Vehicle mein hybrid fixed-wing design, autonomous navigation systems, sustainable energy solutions aur advanced flight control systems hai."
+        elif 'applications' in query or 'use' in query:
+            return "Surveillance aur monitoring, urban air mobility, automated fleet operations aur smart charging integration ke liye use hota hai."
+        elif 'hydrogen' in query:
+            return "Hamara vehicle hydrogen fuel cell technology use karta hai jo zero-emission operations provide karta hai."
+        else:
+            return "Pushpaak ek advanced unmanned aerial system hai with hybrid capabilities aur DGCA compliant design."
+    
     def chat(self, user_input):
-        """Voice-first Hinglish AI assistant with natural responses."""
-        user_lower = user_input.lower().strip()
-        
-        # Handle exit commands immediately
-        if any(cmd in user_lower for cmd in ['exit', 'bye', 'stop']):
-            return self.responses['exit']
-        
-        # Natural Hinglish keyword matching
-        for keyword, response in self.responses.items():
-            if keyword in user_lower:
-                return response
-        
-        # Enhanced voice-friendly responses using loaded data
-        if self.knowledge_base:
-            # Company-related queries
-            if any(word in user_lower for word in ['company', 'pushpak o2', 'pushpaak o 2']):
-                return "Pushpaak O 2 ek Indian aerospace company hai Bhopal mein. Mr. Aditya Shrivastava President hain aur Mr. Aneerudh Kumar Technology Lead hain."
-            elif any(word in user_lower for word in ['president', 'aditya']):
-                return "Mr. Aditya Shrivastava hamare President aur Co-Founder hain, strategic vision aur governance handle karte hain."
-            elif any(word in user_lower for word in ['aneerudh', 'technology lead']):
-                return "Mr. Aneerudh Kumar hamare Co-Founder aur Technology Lead hain, engineering aur systems architecture dekhte hain."
-            
-            # Vehicle-related queries
-            elif any(word in user_lower for word in ['vehicle', 'pushpak', 'aerial', 'drone']):
-                return "Pushpaak aerial vehicle ek advanced UAS hai with AI-enabled autonomous flight aur hydrogen fuel cell technology."
-            elif any(word in user_lower for word in ['features', 'technology', 'specs']):
-                return "Vehicle mein real-time obstacle detection, zero-emission operations, aur DGCA compliant design hai."
-            elif any(word in user_lower for word in ['applications', 'use']):
-                return "Surveillance, monitoring, urban air mobility aur automated fleet operations ke liye use hota hai."
-            
-            # General queries
-            elif any(word in user_lower for word in ['fast', 'speed', 'quick']):
-                return "System fast banane ke liye STT chunk size kam rakho aur async memory fetch use karo."
-            elif any(word in user_lower for word in ['detail', 'explain', 'samjhao']):
-                return "Detail mein samjhaun? Company ya vehicle ke baare mein kya specific jaanna hai?"
-            elif any(word in user_lower for word in ['hindi', 'hinglish', 'language']):
-                return "Main Roman Hinglish mein baat karti hun - natural Hindi-English mix."
-        
-        return self.responses['default']
+        """Main chat function that analyzes and responds"""
+        return self.analyze_query(user_input)

@@ -146,7 +146,14 @@ class ShipraAudio:
         if on_end: on_end()
 
     async def _generate_edge_tts(self, text, filename):
-        communicate = edge_tts.Communicate(text, self.voice, rate=self.rate, volume=self.volume, pitch=self.pitch)
+        # Use Indian accent with decreased pitch and increased speed
+        communicate = edge_tts.Communicate(
+            text, 
+            self.voice, 
+            rate="+25%",  # Increase speed by 25%
+            volume=self.volume, 
+            pitch="-10%"  # Decrease pitch by 10%
+        )
         await communicate.save(filename)
 
     def _play_audio(self, filename):
