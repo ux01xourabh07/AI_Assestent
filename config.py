@@ -1,12 +1,20 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class Config:
     # AI Models
-    MODEL_NAME = "llama3.2:1b"       # 1 Billion Parameters (Fast & Efficient)
-    BASE_URL = "http://localhost:11434"
+    # Using Gemini 2.0 Flash (Preview) as "Gemini 3 Preview" proxy
+    MODEL_NAME = "gemini-3-flash-preview" # Trying 2.5 to escape Quota limits
+    
+    # Audio Settings
+    MIC_INDEX = None # Set to Integer ID (e.g., 1) to use specific mic
+    
+    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
     
     # Embedding Model
-    EMBEDDING_MODEL_NAME = "nomic-embed-text"
+    # Using Google's embedding-001 via langchain-google-genai
 
     # Persistence Paths
     CHROMA_PERSIST_DIRECTORY = os.path.join(os.getcwd(), "chroma_db")
