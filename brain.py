@@ -9,7 +9,6 @@ class ShipraBrain:
         self.company_data = self.load_company_data()
         self.vehicle_data = self.load_vehicle_data()
         self.response_counter = {}
-        self.force_english = False  # Flag to force English responses
         
     def load_company_data(self):
         """Load company information from Pushpak_Company.md"""
@@ -29,20 +28,30 @@ class ShipraBrain:
     
     def detect_language(self, text):
         """Detect if input is primarily Hindi or English"""
-        # If force_english flag is set, always return english
-        if self.force_english:
+        # Check for explicit 'english' keyword in the query
+        if 'english' in text.lower():
             return 'english'
         
-        # Otherwise, always return hindi for Hinglish mode (default)
-        # This ensures Hinglish responses unless explicitly set to English
-        hindi_chars = len(re.findall(r'[\u0900-\u097F]', text))
+        # Check for Hindi/Hinglish keywords
+        hindi_keywords = ['hindi', 'hinglish', 'kaun', 'kya', 'kaise', 'kahan', 'kyun', 'kab', 
+                         'hai', 'hain', 'hun', 'ho', 'mein', 'ko', 'ka', 'ki', 'ke', 'se', 
+                         'tak', 'par', 'aur', 'ya', 'bhi', 'tum', 'aap', 'main', 'yeh', 'veh']
         
-        # If there are Hindi characters, definitely Hindi
+        # Check for Devanagari characters
+        hindi_chars = len(re.findall(r'[\u0900-\u097F]', text))
         if hindi_chars > 0:
             return 'hindi'
         
-        # For English input without force_english flag, use Hinglish (hindi mode)
-        return 'hindi'
+        # Count Hindi keywords in the text
+        words = text.lower().split()
+        hindi_word_count = sum(1 for word in words if word in hindi_keywords)
+        
+        # If more than 20% of words are Hindi keywords, use Hindi
+        if len(words) > 0 and (hindi_word_count / len(words)) > 0.2:
+            return 'hindi'
+        
+        # Default to English for pure English sentences
+        return 'english'
     
     def get_varied_response(self, key, responses):
         """Get varied response to avoid repetition"""
@@ -57,9 +66,9 @@ class ShipraBrain:
         """Return unknown response based on language"""
         if lang == 'hindi':
             responses = [
-                "मुझे इस बारे में जानकारी नहीं है।",
-                "यह मेरी जानकारी में नहीं है।",
-                "इसके बारे में मुझे पता नहीं है।"
+                "Mujhe is baare mein jaankari nahi hai.",
+                "Yeh meri jaankari mein nahi hai.",
+                "Iske baare mein mujhe pata nahi hai."
             ]
         else:
             responses = [
@@ -73,15 +82,8 @@ class ShipraBrain:
         """Analyze user query and return relevant information"""
         query = user_input.lower().strip()
         
-        # Check for language preference requests
-        if any(phrase in query for phrase in ['speak in english', 'speak english', 'english please', 'i cannot understand', 'i dont understand', 'english mein bolo', 'english me bolo']):
-            self.force_english = True
-            return "Sure! I will speak in English from now on. How can I help you?"
-        
-        # Check for Hindi preference requests
-        if any(phrase in query for phrase in ['speak in hindi', 'hindi mein bolo', 'hindi please', 'should i talk in hindi', 'can i speak hindi', 'hindi me baat karu', 'hindi mai baat karo', 'hindi bolo', 'hindi me bolo', 'talk in hindi', 'speak hindi']):
-            self.force_english = False
-            return "Theek hai! Main ab Hindi mein baat karungi. Kaise madad kar sakti hun?"
+        # Language detection happens automatically per sentence now
+        # No need for persistent language preference
         
         lang = self.detect_language(user_input)
         
@@ -98,9 +100,9 @@ class ShipraBrain:
             if 'purpose' in query or 'kyu' in query:
                 if lang == 'hindi':
                     responses = [
-                        "मेरा purpose है Pushpak vehicle के बारे में जानकारी देना। मैं aerial vehicle की features, capacity और technology के बारे में बता सकती हूं।",
-                        "मुझे इसलिए बनाया गया है ताकि मैं Pushpak vehicle की information provide कर सकूं। मैं vehicle specifications और capabilities के बारे में बताती हूं।",
-                        "मेरा काम है Pushpak aerial vehicle के बारे में बताना - उसकी capacity, features और technology।"
+                        "Mera purpose hai Pushpak vehicle ke baare mein jaankari dena. Main aerial vehicle ki features, capacity aur technology ke baare mein bata sakti hun.",
+                        "Mujhe isliye banaya gaya hai taaki main Pushpak vehicle ki information provide kar sakun. Main vehicle specifications aur capabilities ke baare mein batati hun.",
+                        "Mera kaam hai Pushpak aerial vehicle ke baare mein batana - uski capacity, features aur technology."
                     ]
                 else:
                     responses = [
@@ -111,9 +113,9 @@ class ShipraBrain:
             else:
                 if lang == 'hindi':
                     responses = [
-                        "मैं शिप्रा हूं, Pushpak vehicle की AI assistant। मैं aerial vehicle के बारे में जानकारी देती हूं।",
-                        "नमस्ते! मैं Shipra, Pushpak vehicle की voice assistant। मैं vehicle information के लिए यहां हूं।",
-                        "मैं शिप्रा, Pushpak aerial vehicle की dedicated assistant हूं। मैं vehicle technology के बारे में बता सकती हूं।"
+                        "Main Shipra hun, Pushpak vehicle ki AI assistant. Main aerial vehicle ke baare mein jaankari deti hun.",
+                        "Namaste! Main Shipra, Pushpak vehicle ki voice assistant. Main vehicle information ke liye yahan hun.",
+                        "Main Shipra, Pushpak aerial vehicle ki dedicated assistant hun. Main vehicle technology ke baare mein bata sakti hun."
                     ]
                 else:
                     responses = [
@@ -128,9 +130,9 @@ class ShipraBrain:
             if 'thank' in query or 'dhanyawad' in query or 'धन्यवाद' in query:
                 if lang == 'hindi':
                     responses = [
-                        "कोई बात नहीं! खुशी से मदद की।",
-                        "स्वागत है! और कुछ चाहिए?",
-                        "धन्यवाद आपका! कुछ और पूछना है?"
+                        "Koi baat nahi! Khushi se madad ki.",
+                        "Swagat hai! Aur kuch chahiye?",
+                        "Dhanyawad aapka! Kuch aur poochna hai?"
                     ]
                 else:
                     responses = [
@@ -141,9 +143,9 @@ class ShipraBrain:
             elif 'good morning' in query:
                 if lang == 'hindi':
                     responses = [
-                        "सुप्रभात! आज कैसे मदद कर सकती हूं?",
-                        "गुड मॉर्निंग! दिन शुभ हो, क्या चाहिए?",
-                        "नमस्कार! सुबह की शुरुआत कैसे करें?"
+                        "Suprabhat! Aaj kaise madad kar sakti hun?",
+                        "Good morning! Din shubh ho, kya chahiye?",
+                        "Namaskar! Subah ki shuruaat kaise karein?"
                     ]
                 else:
                     responses = [
@@ -154,9 +156,9 @@ class ShipraBrain:
             elif 'good afternoon' in query:
                 if lang == 'hindi':
                     responses = [
-                        "नमस्कार! दोपहर कैसी जा रही है?",
-                        "गुड आफ्टरनून! कैसे सहायता करूं?",
-                        "प्रणाम! दिन कैसा चल रहा है?"
+                        "Namaskar! Dopahar kaisi ja rahi hai?",
+                        "Good afternoon! Kaise sahayata karun?",
+                        "Pranaam! Din kaisa chal raha hai?"
                     ]
                 else:
                     responses = [
@@ -167,9 +169,9 @@ class ShipraBrain:
             elif 'good evening' in query:
                 if lang == 'hindi':
                     responses = [
-                        "शुभ संध्या! शाम कैसी है?",
-                        "गुड इवनिंग! कैसे मदद करूं?",
-                        "नमस्कार! संध्या की शुरुआत अच्छी हो!"
+                        "Shubh sandhya! Shaam kaisi hai?",
+                        "Good evening! Kaise madad karun?",
+                        "Namaskar! Sandhya ki shuruaat achhi ho!"
                     ]
                 else:
                     responses = [
@@ -180,9 +182,9 @@ class ShipraBrain:
             else:
                 if lang == 'hindi':
                     responses = [
-                        "नमस्ते! मैं शिप्रा हूं, Pushpak O2 की AI असिस्टेंट। कैसे मदद कर सकती हूं?",
-                        "हैलो! शिप्रा यहां, आपकी सेवा में। क्या चाहिए?",
-                        "नमस्कार! मैं Pushpak O2 की AI असिस्टेंट शिप्रा। बताइए कैसे सहायता करूं?"
+                        "Namaste! Main Shipra hun, Pushpak O2 ki AI assistant. Kaise madad kar sakti hun?",
+                        "Hello! Shipra yahan, aapki seva mein. Kya chahiye?",
+                        "Namaskar! Main Pushpak O2 ki AI assistant Shipra. Bataiye kaise sahayata karun?"
                     ]
                 else:
                     responses = [
@@ -196,9 +198,9 @@ class ShipraBrain:
         elif any(word in query for word in ['bye', 'goodbye', 'exit', 'stop', 'alvida', 'अलविदा', 'tata', 'see you']):
             if lang == 'hindi':
                 responses = [
-                    "धन्यवाद! फिर मिलते हैं।",
-                    "अच्छा, फिर बात करते हैं। नमस्ते!",
-                    "ठीक है, अलविदा! खुश रहिए।"
+                    "Dhanyawad! Phir milte hain.",
+                    "Achha, phir baat karte hain. Namaste!",
+                    "Theek hai, alvida! Khush rahiye."
                 ]
             else:
                 responses = [
@@ -213,16 +215,14 @@ class ShipraBrain:
     
     def get_company_info(self, query, lang):
         """Extract specific company information based on query"""
-        # Override lang if force_english is True
-        if self.force_english:
-            lang = 'english'
+        # Language is already detected, no need to override
             
         if 'president' in query or 'aditya' in query:
             if lang == 'hindi':
                 responses = [
-                    "श्री आदित्य श्रीवास्तव हमारे President और Co-Founder हैं। वे strategic vision और governance handle करते हैं।",
-                    "आदित्य जी Pushpak O2 के President हैं। Company की strategic direction वे देखते हैं।",
-                    "Mr. Aditya Shrivastava हमारे मुख्य नेता हैं, President के रूप में governance का काम करते हैं।"
+                    "Shri Aditya Shrivastava hamare President aur Co-Founder hain. Ve strategic vision aur governance handle karte hain.",
+                    "Aditya ji Pushpak O2 ke President hain. Company ki strategic direction ve dekhte hain.",
+                    "Mr. Aditya Shrivastava hamare mukhya neta hain, President ke roop mein governance ka kaam karte hain."
                 ]
             else:
                 responses = [
@@ -235,9 +235,9 @@ class ShipraBrain:
         elif 'aneerudh' in query or 'technology lead' in query:
             if lang == 'hindi':
                 responses = [
-                    "श्री अनीरुध कुमार हमारे Co-Founder और Technology Lead हैं। वे engineering और systems architecture देखते हैं।",
-                    "अनीरुध जी technical operations handle करते हैं। वे हमारे Technology Lead हैं।",
-                    "Mr. Aneerudh Kumar engineering का पूरा काम देखते हैं, Co-Founder भी हैं।"
+                    "Shri Aneerudh Kumar hamare Co-Founder aur Technology Lead hain. Ve engineering aur systems architecture dekhte hain.",
+                    "Aneerudh ji technical operations handle karte hain. Ve hamare Technology Lead hain.",
+                    "Mr. Aneerudh Kumar engineering ka poora kaam dekhte hain, Co-Founder bhi hain."
                 ]
             else:
                 responses = [
@@ -250,9 +250,9 @@ class ShipraBrain:
         elif ('founder' in query and ('kaun hai' in query or 'who is' in query)) or ('pushpak auto' in query and ('founder' in query or 'kaun hai' in query)):
             if lang == 'hindi':
                 responses = [
-                    "Pushpak O2 के दो co-founders हैं - Mr. Aditya Shrivastava जो President हैं और Mr. Aneerudh Kumar जो Technology Lead हैं। दोनों मिलकर company को चला रहे हैं।",
-                    "Pushpak auto यानी Pushpak O2 के founders हैं Aditya Shrivastava साहब (President) और Aneerudh Kumar जी (Technology Lead)। दोनों co-founders हैं।",
-                    "हमारे company के दो मुख्य नेता हैं - Aditya ji जो business operations handle करते हैं और Aneerudh ji जो technical work देखते हैं।"
+                    "Pushpak O2 ke do co-founders hain - Mr. Aditya Shrivastava jo President hain aur Mr. Aneerudh Kumar jo Technology Lead hain. Dono milkar company ko chala rahe hain.",
+                    "Pushpak auto yaani Pushpak O2 ke founders hain Aditya Shrivastava sahab (President) aur Aneerudh Kumar ji (Technology Lead). Dono co-founders hain.",
+                    "Hamare company ke do mukhya neta hain - Aditya ji jo business operations handle karte hain aur Aneerudh ji jo technical work dekhte hain."
                 ]
             else:
                 responses = [
@@ -264,9 +264,9 @@ class ShipraBrain:
         elif 'founder' in query or 'co-founder' in query:
             if lang == 'hindi':
                 responses = [
-                    "Pushpak O2 के दो co-founders हैं - Mr. Aditya Shrivastava (President) और Mr. Aneerudh Kumar (Technology Lead)। दोनों मिलकर company को आगे बढ़ा रहे हैं।",
-                    "हमारे founders हैं Aditya ji जो business operations handle करते हैं और Aneerudh ji जो technical side देखते हैं।",
-                    "Company के दो मुख्य नेता हैं - strategic leadership के लिए Aditya Shrivastava और technical innovation के लिए Aneerudh Kumar।"
+                    "Pushpak O2 ke do co-founders hain - Mr. Aditya Shrivastava (President) aur Mr. Aneerudh Kumar (Technology Lead). Dono milkar company ko aage badha rahe hain.",
+                    "Hamare founders hain Aditya ji jo business operations handle karte hain aur Aneerudh ji jo technical side dekhte hain.",
+                    "Company ke do mukhya neta hain - strategic leadership ke liye Aditya Shrivastava aur technical innovation ke liye Aneerudh Kumar."
                 ]
             else:
                 responses = [
@@ -277,9 +277,9 @@ class ShipraBrain:
         elif 'location' in query or 'bhopal' in query:
             if lang == 'hindi':
                 responses = [
-                    "Pushpak O2 का headquarters भोपाल, मध्य प्रदेश में है।",
-                    "हमारा मुख्यालय भोपाल में स्थित है, MP में।",
-                    "Company का base भोपाल, मध्य प्रदेश में है।"
+                    "Pushpak O2 ka headquarters Bhopal, Madhya Pradesh mein hai.",
+                    "Hamara mukhyalay Bhopal mein sthit hai, MP mein.",
+                    "Company ka base Bhopal, Madhya Pradesh mein hai."
                 ]
             else:
                 responses = [
@@ -292,9 +292,9 @@ class ShipraBrain:
         else:
             if lang == 'hindi':
                 responses = [
-                    "Pushpak O2 एक Indian aerospace company है जो indigenous aviation platforms और unmanned aerial systems develop करती है।",
-                    "यह भारतीय एयरोस्पेस कंपनी है जो स्वदेशी विमानन तकनीक बनाती है।",
-                    "हमारी कंपनी indigenous aircraft और drone technology में काम करती है।"
+                    "Pushpak O2 ek Indian aerospace company hai jo indigenous aviation platforms aur unmanned aerial systems develop karti hai.",
+                    "Yeh Bharatiya aerospace company hai jo swadeshi vimanan takneek banati hai.",
+                    "Hamari company indigenous aircraft aur drone technology mein kaam karti hai."
                 ]
             else:
                 responses = [
@@ -306,16 +306,14 @@ class ShipraBrain:
     
     def get_vehicle_info(self, query, lang):
         """Extract specific vehicle information based on query"""
-        # Override lang if force_english is True
-        if self.force_english:
-            lang = 'english'
+        # Language is already detected, no need to override
             
         if 'capacity' in query or 'load' in query or 'person' in query:
             if lang == 'hindi':
                 responses = [
-                    "Pushpak vehicle की load capacity 500kg है या 4 persons तक ले जा सकता है।",
-                    "यह 4 लोगों को carry कर सकता है या 500 किलो वजन उठा सकता है।",
-                    "इसमें 4 व्यक्ति बैठ सकते हैं या 500kg का भार ले जा सकता है।"
+                    "Pushpak vehicle ki load capacity 500kg hai ya 4 persons tak le ja sakta hai.",
+                    "Yeh 4 logon ko carry kar sakta hai ya 500 kilo wajan utha sakta hai.",
+                    "Ismein 4 vyakti baith sakte hain ya 500kg ka bhaar le ja sakta hai."
                 ]
             else:
                 responses = [
@@ -328,9 +326,9 @@ class ShipraBrain:
         elif 'features' in query:
             if lang == 'hindi':
                 responses = [
-                    "Pushpak vehicle में AI-enabled autonomous flight, real-time obstacle detection, hydrogen fuel cell power, और zero-emission operations है।",
-                    "इसमें स्वचालित उड़ान, बाधा पहचान, हाइड्रोजन ईंधन और शून्य प्रदूषण की सुविधा है।",
-                    "Vehicle में AI flight control, obstacle avoidance, hydrogen power और eco-friendly operations हैं।"
+                    "Pushpak vehicle mein AI-enabled autonomous flight, real-time obstacle detection, hydrogen fuel cell power, aur zero-emission operations hai.",
+                    "Ismein swachalit udaan, baadha pehchaan, hydrogen indhan aur shunya pradooshan ki suvidha hai.",
+                    "Vehicle mein AI flight control, obstacle avoidance, hydrogen power aur eco-friendly operations hain."
                 ]
             else:
                 responses = [
@@ -343,9 +341,9 @@ class ShipraBrain:
         else:
             if lang == 'hindi':
                 responses = [
-                    "Pushpak एक advanced unmanned aerial system है with hybrid capabilities और DGCA compliant design।",
-                    "यह एक उन्नत ड्रोन है जो hybrid technology और DGCA मानकों के अनुसार बना है।",
-                    "Pushpak aerial vehicle एक स्मार्ट UAS है जो सभी aviation नियमों का पालन करता है।"
+                    "Pushpak ek advanced unmanned aerial system hai with hybrid capabilities aur DGCA compliant design.",
+                    "Yeh ek unnat drone hai jo hybrid technology aur DGCA maankon ke anusaar bana hai.",
+                    "Pushpak aerial vehicle ek smart UAS hai jo sabhi aviation niyamon ka paalan karta hai."
                 ]
             else:
                 responses = [
