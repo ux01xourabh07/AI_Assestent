@@ -45,9 +45,9 @@ class ShipraAudio:
 
         # Voice Settings
         self.voice = "en-IN-NeerjaNeural"  # Clear Indian English Female
-        self.rate = "+0%"
+        self.rate = "+25%"  # 25% faster for responsive speech
         self.volume = "+0%"
-        self.pitch = "+0Hz"
+        self.pitch = "-15Hz"  # Decreased pitch for natural human-like voice
         
         # RVC Settings
         self.rvc_model_path = None
@@ -146,13 +146,13 @@ class ShipraAudio:
         if on_end: on_end()
 
     async def _generate_edge_tts(self, text, filename):
-        # Use Indian accent with decreased pitch and increased speed
+        # Use Indian accent with decreased pitch and increased speed for human-like voice
         communicate = edge_tts.Communicate(
             text, 
             self.voice, 
-            rate="+25%",  # Increase speed by 25%
+            rate=self.rate,  # +25% faster
             volume=self.volume, 
-            pitch="-10Hz"  # Decrease pitch by 10Hz (not percentage)
+            pitch=self.pitch  # -15Hz for natural tone
         )
         await communicate.save(filename)
 
