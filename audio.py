@@ -10,13 +10,7 @@ import glob
 from config import Config
 
 # Try importing RVC
-RVC_AVAILABLE = False
-try:
-    from rvc_python.infer import infer_file
-    RVC_AVAILABLE = True
-    print("[Audio] RVC Library found.")
-except ImportError:
-    print("[Audio] RVC Library NOT found (Voice Conversion disabled).")
+# RVC Removed as per user request
 
 # Check if we are running in an event loop (e.g., Jupyter or some GUIs)
 try:
@@ -43,33 +37,11 @@ class ShipraAudio:
         except Exception as e:
             print(f"[Audio] Pygame Init Error: {e}")
 
-        # Voice Settings
-        self.voice = "en-IN-NeerjaNeural"  # Clear Indian English Female
-        self.rate = "+25%"  # 25% faster for responsive speech
-        self.volume = "+0%"
-        self.pitch = "-15Hz"  # Decreased pitch for natural human-like voice
-        
-        # RVC Settings
-        self.rvc_model_path = None
-        self.rvc_index_path = None
-        self.check_for_rvc_model()
-
-    def check_for_rvc_model(self):
-        """Scans 'models' directory for .pth files."""
-        if not RVC_AVAILABLE: return
-        
-        models_dir = os.path.join(os.getcwd(), "models")
-        pth_files = glob.glob(os.path.join(models_dir, "*.pth"))
-        
-        if pth_files:
-            self.rvc_model_path = pth_files[0]
-            print(f"[Audio] RVC Model found: {os.path.basename(self.rvc_model_path)}")
-            # Check for index
-            base_name = os.path.splitext(self.rvc_model_path)[0]
-            if os.path.exists(base_name + ".index"):
-                self.rvc_index_path = base_name + ".index"
-        else:
-            print("[Audio] No RVC model (.pth) found in 'models/'. Using standard TTS.")
+        # Voice Settings - User Custom (20Hz, ~170wpm)
+        self.voice = "en-IN-NeerjaNeural" 
+        self.rate = "+22%"  # Approx 170 wpm
+        self.volume = "+10%"
+        self.pitch = "+18Hz"  # User specified
 
     def set_voice_params(self, pitch_hz, rate_percent):
         self.pitch = f"{pitch_hz:+}Hz"
@@ -109,7 +81,7 @@ class ShipraAudio:
             return None
 
     def speak(self, text, on_start=None, on_end=None):
-        """Generates and plays TTS audio (with optional RVC)."""
+        """Generates and plays TTS audio using EdgeTTS."""
         if not text: return
         
         clean_text = self.normalize_text(text)
@@ -118,30 +90,10 @@ class ShipraAudio:
         if on_start: on_start()
         
         tts_file = "response_tts.mp3"
-        final_file = "response_final.wav"
         
-        # 1. Generate TTS
+        # Generate and Play TTS
         asyncio.run(self._generate_edge_tts(clean_text, tts_file))
-        
-        # 2. Apply RVC (if available)
-        if self.rvc_model_path:
-            print(f"[Audio] Applying RVC ({os.path.basename(self.rvc_model_path)})...")
-            try:
-                infer_file(
-                    input_path=tts_file,
-                    model_path=self.rvc_model_path,
-                    index_path=self.rvc_index_path,
-                    device="cpu", # Assume CPU for safety, 'cuda:0' if GPU available
-                    f0_method="rmvpe",
-                    f0_up_key=0, 
-                    opt_path=final_file
-                )
-                self._play_audio(final_file)
-            except Exception as e:
-                print(f"[Audio] RVC Failed: {e}. Falling back to TTS.")
-                self._play_audio(tts_file)
-        else:
-            self._play_audio(tts_file)
+        self._play_audio(tts_file)
         
         if on_end: on_end()
 

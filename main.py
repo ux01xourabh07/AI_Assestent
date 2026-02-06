@@ -11,6 +11,7 @@ def main():
     audio = Systems.get_audio()
     
     print("\n--- SYSTEM READY ---")
+    print("Shipra is listening continuously. Speak anytime!\n")
     
     # Intro
     intro_text = "Namaste! Main Pushpak O 2 ki AI Assistant hoon. Boliye, main kya kar sakti hoon?"
@@ -18,19 +19,22 @@ def main():
     
     while True:
         try:
-            # 1. Listen
+            # Continuously listen for user input
             user_text = audio.listen()
             
             if user_text:
-                # 2. Check for Exit
-                if "exit" in user_text.lower() or "bye" in user_text.lower() or "stop" in user_text.lower():
-                    audio.speak("Dhanyavaad. Alvida!")
+                # Check for Exit - respond based on the word used
+                if any(word in user_text.lower() for word in ['alvida', 'tata']):
+                    audio.speak("Dhanyavaad. Alvida! Jay Shree Ram.")
+                    break
+                elif any(word in user_text.lower() for word in ['exit', 'bye', 'goodbye', 'stop']):
+                    audio.speak("Thank you. Goodbye! Jay Shree Ram.")
                     break
                 
-                # 3. Brain Processing
+                # Brain Processing
                 response_text = brain.chat(user_text)
                 
-                # 4. Speak Response
+                # Speak Response
                 audio.speak(response_text)
                 
         except KeyboardInterrupt:

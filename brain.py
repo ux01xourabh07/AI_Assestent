@@ -3,6 +3,7 @@ import os
 import re
 import random
 from datetime import datetime
+from weather import WeatherService
 
 class ShipraBrain:
     def __init__(self, domain="General Assistant"):
@@ -10,6 +11,7 @@ class ShipraBrain:
         self.company_data = self.load_company_data()
         self.vehicle_data = self.load_vehicle_data()
         self.response_counter = {}
+        self.weather_service = WeatherService()
         
     def load_company_data(self):
         """Load company information from Pushpak_Company.md"""
@@ -33,9 +35,14 @@ class ShipraBrain:
         if 'english' in text.lower():
             return 'english'
         
+        # Check for specific Hindi keywords that indicate Hinglish preference
+        hinglish_indicators = ['bare', 'mein', 'batao', 'baare']
+        if any(word in text.lower() for word in hinglish_indicators):
+            return 'hindi'
+        
         # Check for Hindi/Hinglish keywords
         hindi_keywords = ['hindi', 'hinglish', 'kaun', 'kya', 'kaise', 'kahan', 'kyun', 'kab', 
-                         'hai', 'hain', 'hun', 'ho', 'mein', 'ko', 'ka', 'ki', 'ke', 'se', 
+                         'hai', 'hain', 'hun', 'ho', 'ko', 'ka', 'ki', 'ke', 'se', 
                          'tak', 'par', 'aur', 'ya', 'bhi', 'tum', 'aap', 'main', 'yeh', 'veh']
         
         # Check for Devanagari characters
@@ -67,15 +74,15 @@ class ShipraBrain:
         """Return unknown response based on language"""
         if lang == 'hindi':
             responses = [
-                "Mujhe is baare mein jaankari nahi hai.",
-                "Yeh meri jaankari mein nahi hai.",
-                "Iske baare mein mujhe pata nahi hai."
+                "Maaf kijiye, main sirf Pushpak O2 company aur vehicle ke baare mein jaankari de sakti hun. Iske baare mein mujhe pata nahi hai.",
+                "Yeh meri expertise ke bahar hai. Main bas Pushpak O2 aur hamare aerial vehicle ke baare mein bata sakti hun.",
+                "Main sirf Pushpak O2 ki assistant hun. Is topic ke baare mein mujhe jaankari nahi hai."
             ]
         else:
             responses = [
-                "I don't have knowledge about this.",
-                "This is not in my knowledge base.",
-                "I'm not aware of this information."
+                "Sorry, I can only provide information about Pushpak O2 company and our vehicle. I don't have knowledge about this.",
+                "This is outside my expertise. I can only tell you about Pushpak O2 and our aerial vehicle.",
+                "I'm only an assistant for Pushpak O2. I don't have information about this topic."
             ]
         return self.get_varied_response('unknown', responses)
     
@@ -93,8 +100,28 @@ class ShipraBrain:
             return self.get_company_info(query, lang)
         
         # Vehicle-related queries  
-        elif any(word in query for word in ['vehicle', 'pushpak', 'aerial', 'drone', 'uas', 'features', 'technology', 'hydrogen', 'autonomous', 'capacity', 'load']):
+        elif any(word in query for word in ['vehicle', 'pushpak', 'aerial', 'drone', 'uas', 'features', 'technology', 'hydrogen', 'autonomous', 'capacity', 'load', 'speed', 'fast', 'kitni speed', 'speeed']):
             return self.get_vehicle_info(query, lang)
+        
+        # Weather queries
+        elif any(word in query for word in ['weather', 'mausam', 'temperature', 'temp', 'garmi', 'sardi', 'baarish', 'rain', 'forecast', 'kal ka mausam', 'aaj ka mausam', 'waether', 'vedar']):
+            return self.get_weather_info(query, lang)
+        
+        # How are you queries
+        elif any(word in query for word in ['how are you', 'how r u', 'kaise ho', 'kaisi ho', 'kya haal', 'how do you do', 'how are u']):
+            if lang == 'hindi':
+                responses = [
+                    "Main bilkul theek hun, dhanyawad! Aap kaise hain?",
+                    "Main achhi hun, shukriya! Aap batao, kaise hain?",
+                    "Sab badhiya hai! Aapka din kaisa ja raha hai?"
+                ]
+            else:
+                responses = [
+                    "I'm doing great, thank you! How are you?",
+                    "I'm well, thanks for asking! How about you?",
+                    "All good! How is your day going?"
+                ]
+            return self.get_varied_response('how_are_you', responses)
         
         # Time queries
         elif any(word in query for word in ['time', 'samay', 'kitne baje', 'what time', 'current time', 'abhi kitne baje']):
@@ -133,7 +160,7 @@ class ShipraBrain:
             return self.get_varied_response('time', responses)
         
         # Personal questions about Shipra
-        elif any(word in query for word in ['who are you', 'kaun ho', 'tum kaun', 'your purpose', 'tumhara purpose', 'why you', 'kyu banaya']):
+        elif any(word in query for word in ['who are you', 'kaun ho', 'tum kaun', 'your purpose', 'tumhara purpose', 'why you', 'kyu banaya', 'apne bare', 'apne baare']):
             if 'purpose' in query or 'kyu' in query:
                 if lang == 'hindi':
                     responses = [
@@ -233,17 +260,18 @@ class ShipraBrain:
         
         # Exit commands
         elif any(word in query for word in ['bye', 'goodbye', 'exit', 'stop', 'alvida', 'अलविदा', 'tata', 'see you']):
-            if lang == 'hindi':
+            # Use Hinglish for Hindi exit words, English for English exit words
+            if any(word in query for word in ['alvida', 'अलविदा', 'tata']):
                 responses = [
-                    "Dhanyawad! Phir milte hain.",
-                    "Achha, phir baat karte hain. Namaste!",
-                    "Theek hai, alvida! Khush rahiye."
+                    "Dhanyawad! Phir milte hain. Jay Shree Ram.",
+                    "Achha, phir baat karte hain. Namaste! Jay Shree Ram.",
+                    "Theek hai, alvida! Khush rahiye. Jay Shree Ram."
                 ]
             else:
                 responses = [
-                    "Thank you! See you again.",
-                    "Alright, talk to you later. Goodbye!",
-                    "Okay, goodbye! Stay happy."
+                    "Thank you! See you again. Jay Shree Ram.",
+                    "Alright, talk to you later. Goodbye! Jay Shree Ram.",
+                    "Okay, goodbye! Stay happy. Jay Shree Ram."
                 ]
             return self.get_varied_response('goodbye', responses)
         
@@ -359,6 +387,10 @@ class ShipraBrain:
                     "The vehicle can seat 4 persons or carry a load of 500kg."
                 ]
             return self.get_varied_response('capacity', responses)
+        
+        elif 'speed' in query or 'fast' in query or 'kitni speed' in query or 'top speed' in query or 'speeed' in query:
+            # Always respond in both languages for speed queries
+            return "Pushpak vehicle ki top speed 400 kilometer per hour hai. The top speed of Pushpak vehicle is 400 kilometers per hour."
             
         elif 'features' in query:
             if lang == 'hindi':
@@ -390,6 +422,46 @@ class ShipraBrain:
                 ]
             return self.get_varied_response('vehicle_general', responses)
     
+    def get_weather_info(self, query, lang):
+        """Get weather information based on query"""
+        # Check if asking for forecast/tomorrow
+        if 'forecast' in query or 'kal' in query or 'tomorrow' in query:
+            forecast = self.weather_service.get_forecast(lang)
+            if forecast:
+                return forecast
+            else:
+                if lang == 'hindi':
+                    return "Maaf kijiye, mausam ki jaankari abhi nahi mil pa rahi hai."
+                else:
+                    return "Sorry, weather information is not available right now."
+        # Default: return today's weather for any weather keyword
+        else:
+            weather = self.weather_service.get_weather(lang)
+            if weather:
+                return weather
+            else:
+                if lang == 'hindi':
+                    return "Maaf kijiye, mausam ki jaankari abhi nahi mil pa rahi hai."
+                else:
+                    return "Sorry, weather information is not available right now."
+    
     def chat(self, user_input):
         """Main chat function that analyzes and responds"""
-        return self.analyze_query(user_input)
+        # Remove name prefix if present
+        cleaned_input = self.remove_name_prefix(user_input)
+        return self.analyze_query(cleaned_input)
+    
+    def remove_name_prefix(self, text):
+        """Remove 'Shipra' or similar name prefixes from input"""
+        # Common name patterns
+        name_patterns = ['shipra', 'shipra ji', 'hey shipra', 'hi shipra', 'hello shipra']
+        
+        text_lower = text.lower().strip()
+        
+        for pattern in name_patterns:
+            if text_lower.startswith(pattern):
+                # Remove the name and any following comma or whitespace
+                remaining = text[len(pattern):].lstrip(' ,').strip()
+                return remaining if remaining else text
+        
+        return text

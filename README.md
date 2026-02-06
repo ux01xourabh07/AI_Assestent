@@ -110,6 +110,26 @@ Shipra automatically detects and responds in the appropriate language:
 - "Tell me the features" → English response
 - "Features kya hain?" → Hinglish response
 
+**Weather Information:**
+- "What's the weather?" → English response with current weather
+- "Mausam kaisa hai?" → Hinglish response with current weather
+- "Tomorrow's forecast" → English response with forecast
+- "Kal ka mausam kya hoga?" → Hinglish response with forecast
+
+### 4. Exit Commands
+
+**Company Information:**
+- "Who is the president?" → English response
+- "Founder kaun hai?" → Hinglish response
+- "Tell me about Pushpak O2" → English response
+- "Company ke baare mein batao" → Hinglish response
+
+**Vehicle Information:**
+- "What is the load capacity?" → English response
+- "Vehicle ki capacity kya hai?" → Hinglish response
+- "Tell me the features" → English response
+- "Features kya hain?" → Hinglish response
+
 ### 4. Exit Commands
 Say: "Exit", "Bye", "Stop", "Alvida", or "Tata"
 

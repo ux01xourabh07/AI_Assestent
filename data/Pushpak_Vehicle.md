@@ -7,6 +7,9 @@ Advanced unmanned aerial system (UAS) with hybrid capabilities
 - 4 persons seating capacity
 - 500kg maximum load capacity
 
+## Performance
+- Top Speed: 400 km/h
+
 ## Key Features
 - AI-enabled autonomous flight
 - Real-time obstacle detection

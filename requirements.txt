@@ -19,4 +19,6 @@ torch
 torchaudio
 faiss-cpu
 yt-dlp
+requests
+geocoder
 
