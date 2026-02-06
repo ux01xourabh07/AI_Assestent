@@ -1,66 +1,167 @@
-# Shipra AI - Cloud-Hybrid Architecture Approach 🚀
+# Shipra AI - Voice-First CLI Architecture 🚀
 
-**Proprietary Design by Pushpak O 2**
+**Proprietary Design by Pushpak O2**
 
-This document outlines the architectural approach for running Shipra AI. The system has been streamlined to a **Single Node** architecture, leveraging **Google Gemini (Cloud)** for intelligence while maintaining local control for Audio I/O and UI.
+This document outlines the architectural approach for Shipra AI - a streamlined **Voice-First Command Line Assistant** designed for Pushpak O2.
 
 ---
 
 ## 1. High-Level Architecture
 
-The system runs entirely on the **User's Laptop (Client)**, connected to the internet.
+The system runs entirely on the **User's Machine**, with cloud connectivity for AI intelligence.
 
-### 🖥️ The Client (User's Laptop)
-*   **Role**: All-in-one Interface & logic.
-*   **Responsibility**: UI, Audio Processing, API Communication.
+### 💻 The Client (User's Machine)
+*   **Role**: Voice-first interface with automatic language detection.
+*   **Responsibility**: Audio I/O, Language Processing, API Communication.
 *   **Components**:
-    *   **GUI**: built with **PyQt6**.
-    *   **Input**: **SpeechRecognition** (Local STT).
-    *   **Output**: **Edge-TTS** (Local Neural Audio).
-    *   **Brain**: Connects to **Google Gemini API** for intelligence.
-    *   **Video Intelligence**: `video_processor.py` for YouTube audio transcription & analysis.
+    *   **Interface**: Command Line (no GUI overhead).
+    *   **Input**: **Google Speech Recognition** (Cloud STT).
+    *   **Output**: **Edge-TTS** with Indian voice (en-IN-NeerjaNeural).
+    *   **Brain**: **Google Gemini 2.5 Flash** API for intelligence.
+    *   **Knowledge Base**: Local markdown files for company and vehicle information.
 
 ---
 
-## 2. 🎨 Detailed GUI Architecture
-
-The Frontend is built using **PyQt6** for a native, high-performance experience.
+## 2. 🧠 Brain Architecture (`brain.py`)
 
 ### A. Core Components
-1.  **Main Window (`QMainWindow`)**:
-    *   Acts as the central container.
-    *   Manages the specialized Dark Theme.
-2.  **Audio Visualizer**:
-    *   **Reactive**: The "Circle" expands/contracts based on Amplitude.
-3.  **Control Panel**:
-    *   **Sliders**: Real-time adjustment of Pitch and Speed.
+1.  **Language Detection System**:
+    *   Automatic detection of English vs Hinglish.
+    *   Keyword-based analysis (20+ Hindi keywords).
+    *   Devanagari script detection.
+    *   "english" keyword override.
 
-### B. Threading Model
-*   **Main Thread**: GUI rendering.
-*   **`ListenWorker`**: Background thread for Microphone listening.
-*   **`BrainWorker`**: Background thread for API calls to Google Gemini.
-*   **`SpeakWorker`**: Background thread for TTS generation and playback.
+2.  **Knowledge Base**:
+    *   **Company Data**: `Pushpak_Company.md` (leadership, location, mission).
+    *   **Vehicle Data**: `Pushpak_Vehicle.md` (capacity, features, compliance).
+
+3.  **Response System**:
+    *   Varied responses (3 variations per response type).
+    *   Counter-based rotation to avoid repetition.
+    *   Bilingual responses (English + Roman Hinglish).
+
+### B. Language Detection Algorithm
+```
+Input: User text
+↓
+Check for "english" keyword → English mode
+↓
+Detect Devanagari characters → Hinglish mode
+↓
+Count Hindi keywords (kaun, kya, kaise, hai, etc.)
+↓
+If >20% Hindi keywords → Hinglish mode
+↓
+Default → English mode
+```
+
+---
+
+## 3. 🎙️ Audio Architecture (`audio.py`)
+
+### A. Speech Recognition
+*   **Engine**: Google Web Speech API.
+*   **Features**:
+    *   Ambient noise adjustment.
+    *   Configurable microphone selection.
+    *   Robust error handling.
+    *   Timeout management.
+
+### B. Text-to-Speech
+*   **Engine**: Microsoft Edge TTS.
+*   **Voice**: `en-IN-NeerjaNeural` (Indian English female).
+*   **Settings**:
+    *   Pitch: `-10Hz` (natural tone).
+    *   Rate: `+25%` (responsive speed).
+*   **Language Support**: 
+    *   English pronunciation.
+    *   Roman Hinglish pronunciation.
 
 ---
 
-## 3. 🔌 Data Flow
+## 4. 🔄 Data Flow
 
-### API: Google Gemini 1.5 Flash
-*   **Input**: User Text + Context (from local RAG).
-*   **Output**: JSON Execution Plan + Final Response.
-
-### Flow
-1.  **Listen**: Capture Audio -> Text.
-2.  **Retrieve**: Search local `chroma_db` for context.
-3.  **Think**: Send Prompt to Google Gemini API.
-4.  **Speak**: Play returned response using Edge-TTS.
+### Conversation Flow
+```
+1. LISTEN
+   User speaks → Google STT → Text
+   ↓
+2. DETECT LANGUAGE
+   Analyze keywords → English/Hinglish mode
+   ↓
+3. PROCESS QUERY
+   Match query type → Company/Vehicle/General
+   ↓
+4. RETRIEVE KNOWLEDGE
+   Load from markdown files → Extract relevant info
+   ↓
+5. GENERATE RESPONSE
+   Select varied response → Apply language mode
+   ↓
+6. SPEAK
+   Edge TTS → Audio output
+```
 
 ---
 
-## 4. Security & Deployment
+## 5. 📊 Response Variety System
 
-*   **API Key**: Secured in `.env` file (never hardcoded).
-*   **Privacy**: Local RAG ensures documents stay on the machine; only relevant snippets are sent to the cloud for processing.
+### Mechanism
+- Each response type has 3 pre-written variations.
+- Counter tracks which variation was last used.
+- Rotates through variations using modulo operation.
+- Prevents repetitive answers in consecutive queries.
+
+### Example
+```python
+responses = [
+    "Response variation 1",
+    "Response variation 2",
+    "Response variation 3"
+]
+response = responses[counter % 3]
+counter += 1
+```
 
 ---
-**Architected by Pushpak O 2**
+
+## 6. 🔒 Security & Configuration
+
+*   **API Key**: Stored in `config.py` (excluded from git via `.gitignore`).
+*   **Privacy**: All knowledge base files stored locally.
+*   **No Data Collection**: Voice processing happens via standard APIs.
+
+---
+
+## 7. 📝 Knowledge Base Structure
+
+### Company Information (`Pushpak_Company.md`)
+- Company name and aliases
+- Leadership team (President, Technology Lead)
+- Location and headquarters
+- Mission and focus areas
+
+### Vehicle Specifications (`Pushpak_Vehicle.md`)
+- Capacity (persons and load)
+- Technical features (AI, hydrogen, autonomous)
+- Compliance standards (DGCA)
+- System type (UAS)
+
+---
+
+## 8. 🔧 Technical Stack
+
+| Component | Technology |
+|-----------|------------|
+| AI Brain | Google Gemini 2.5 Flash |
+| STT | Google Speech Recognition |
+| TTS | Microsoft Edge TTS |
+| Language | Python 3.10+ |
+| Interface | Command Line |
+| Knowledge | Markdown files |
+| Version Control | Git/GitHub |
+
+---
+
+**Architected by Pushpak O2**  
+**AI Assistant: Shipra**
