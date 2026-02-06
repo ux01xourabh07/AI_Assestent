@@ -9,6 +9,7 @@ class ShipraBrain:
         self.company_data = self.load_company_data()
         self.vehicle_data = self.load_vehicle_data()
         self.response_counter = {}
+        self.force_english = False  # Flag to force English responses
         
     def load_company_data(self):
         """Load company information from Pushpak_Company.md"""
@@ -28,9 +29,20 @@ class ShipraBrain:
     
     def detect_language(self, text):
         """Detect if input is primarily Hindi or English"""
+        # If force_english flag is set, always return english
+        if self.force_english:
+            return 'english'
+        
+        # Otherwise, always return hindi for Hinglish mode (default)
+        # This ensures Hinglish responses unless explicitly set to English
         hindi_chars = len(re.findall(r'[\u0900-\u097F]', text))
-        english_chars = len(re.findall(r'[a-zA-Z]', text))
-        return 'hindi' if hindi_chars > english_chars else 'english'
+        
+        # If there are Hindi characters, definitely Hindi
+        if hindi_chars > 0:
+            return 'hindi'
+        
+        # For English input without force_english flag, use Hinglish (hindi mode)
+        return 'hindi'
     
     def get_varied_response(self, key, responses):
         """Get varied response to avoid repetition"""
@@ -60,6 +72,17 @@ class ShipraBrain:
     def analyze_query(self, user_input):
         """Analyze user query and return relevant information"""
         query = user_input.lower().strip()
+        
+        # Check for language preference requests
+        if any(phrase in query for phrase in ['speak in english', 'speak english', 'english please', 'i cannot understand', 'i dont understand', 'english mein bolo', 'english me bolo']):
+            self.force_english = True
+            return "Sure! I will speak in English from now on. How can I help you?"
+        
+        # Check for Hindi preference requests
+        if any(phrase in query for phrase in ['speak in hindi', 'hindi mein bolo', 'hindi please', 'should i talk in hindi', 'can i speak hindi', 'hindi me baat karu', 'hindi mai baat karo', 'hindi bolo', 'hindi me bolo', 'talk in hindi', 'speak hindi']):
+            self.force_english = False
+            return "Theek hai! Main ab Hindi mein baat karungi. Kaise madad kar sakti hun?"
+        
         lang = self.detect_language(user_input)
         
         # Company-related queries
@@ -69,6 +92,36 @@ class ShipraBrain:
         # Vehicle-related queries  
         elif any(word in query for word in ['vehicle', 'pushpak', 'aerial', 'drone', 'uas', 'features', 'technology', 'hydrogen', 'autonomous', 'capacity', 'load']):
             return self.get_vehicle_info(query, lang)
+        
+        # Personal questions about Shipra
+        elif any(word in query for word in ['who are you', 'kaun ho', 'tum kaun', 'your purpose', 'tumhara purpose', 'why you', 'kyu banaya']):
+            if 'purpose' in query or 'kyu' in query:
+                if lang == 'hindi':
+                    responses = [
+                        "मेरा purpose है Pushpak vehicle के बारे में जानकारी देना। मैं aerial vehicle की features, capacity और technology के बारे में बता सकती हूं।",
+                        "मुझे इसलिए बनाया गया है ताकि मैं Pushpak vehicle की information provide कर सकूं। मैं vehicle specifications और capabilities के बारे में बताती हूं।",
+                        "मेरा काम है Pushpak aerial vehicle के बारे में बताना - उसकी capacity, features और technology।"
+                    ]
+                else:
+                    responses = [
+                        "My purpose is to provide information about the Pushpak vehicle. I can tell you about the aerial vehicle's features, capacity, and technology.",
+                        "I was created to provide information about the Pushpak vehicle. I share details about vehicle specifications and capabilities.",
+                        "My job is to inform about the Pushpak aerial vehicle - its capacity, features, and technology."
+                    ]
+            else:
+                if lang == 'hindi':
+                    responses = [
+                        "मैं शिप्रा हूं, Pushpak vehicle की AI assistant। मैं aerial vehicle के बारे में जानकारी देती हूं।",
+                        "नमस्ते! मैं Shipra, Pushpak vehicle की voice assistant। मैं vehicle information के लिए यहां हूं।",
+                        "मैं शिप्रा, Pushpak aerial vehicle की dedicated assistant हूं। मैं vehicle technology के बारे में बता सकती हूं।"
+                    ]
+                else:
+                    responses = [
+                        "I am Shipra, the AI assistant for Pushpak vehicle. I provide information about the aerial vehicle.",
+                        "Hello! I'm Shipra, the voice assistant for Pushpak vehicle. I'm here to help with vehicle information.",
+                        "I am Shipra, the dedicated assistant for Pushpak aerial vehicle. I can tell you about vehicle technology."
+                    ]
+            return self.get_varied_response('identity', responses)
         
         # General greetings and social responses
         elif any(word in query for word in ['hello', 'hi', 'hey', 'namaste', 'नमस्ते', 'good morning', 'good afternoon', 'good evening', 'thank you', 'thanks', 'dhanyawad', 'धन्यवाद']):
@@ -81,9 +134,9 @@ class ShipraBrain:
                     ]
                 else:
                     responses = [
-                        "Koi baat nahi! Khushi se madad ki.",
-                        "Welcome hai! Aur kuch chahiye?",
-                        "Dhanyawad aapka! Kuch aur poochna hai?"
+                        "No problem! Happy to help.",
+                        "You're welcome! Anything else?",
+                        "Thank you! Any other questions?"
                     ]
             elif 'good morning' in query:
                 if lang == 'hindi':
@@ -94,9 +147,9 @@ class ShipraBrain:
                     ]
                 else:
                     responses = [
-                        "Suprabhat! Aaj kaise madad kar sakti hun?",
-                        "Good morning! Din shubh ho, kya chahiye?",
-                        "Namaskar! Subah ki shuruaat kaise karein?"
+                        "Good morning! How can I help you today?",
+                        "Good morning! Have a great day, what do you need?",
+                        "Hello! How shall we start the morning?"
                     ]
             elif 'good afternoon' in query:
                 if lang == 'hindi':
@@ -107,9 +160,9 @@ class ShipraBrain:
                     ]
                 else:
                     responses = [
-                        "Namaskar! Dopahar kaisi ja rahi hai?",
-                        "Good afternoon! Kaise sahayata karun?",
-                        "Pranam! Din kaisa chal raha hai?"
+                        "Hello! How is your afternoon going?",
+                        "Good afternoon! How can I assist you?",
+                        "Greetings! How is your day going?"
                     ]
             elif 'good evening' in query:
                 if lang == 'hindi':
@@ -120,9 +173,9 @@ class ShipraBrain:
                     ]
                 else:
                     responses = [
-                        "Shubh sandhya! Shaam kaisi hai?",
-                        "Good evening! Kaise madad karun?",
-                        "Namaskar! Sandhya ki shuruaat acchi ho!"
+                        "Good evening! How is your evening?",
+                        "Good evening! How can I help?",
+                        "Hello! Have a great evening!"
                     ]
             else:
                 if lang == 'hindi':
@@ -133,9 +186,9 @@ class ShipraBrain:
                     ]
                 else:
                     responses = [
-                        "Namaste! Main Shipra hun, Pushpak O2 ki AI assistant. Kaise help kar sakti hun?",
-                        "Hello! Shipra here, aapki service mein. Kya chahiye?",
-                        "Namaskar! Main Pushpak O2 ki assistant Shipra. Batao kaise madad karun?"
+                        "Hello! I am Shipra, the AI assistant for Pushpak O2. How can I help you?",
+                        "Hi! Shipra here, at your service. What do you need?",
+                        "Greetings! I am Shipra, the AI assistant for Pushpak O2. How can I assist you?"
                     ]
             return self.get_varied_response('greeting', responses)
         
@@ -149,9 +202,9 @@ class ShipraBrain:
                 ]
             else:
                 responses = [
-                    "Dhanyawad! Phir milte hain.",
-                    "Accha, phir baat karte hain. Namaste!",
-                    "Theek hai, alvida! Khush rahiye."
+                    "Thank you! See you again.",
+                    "Alright, talk to you later. Goodbye!",
+                    "Okay, goodbye! Stay happy."
                 ]
             return self.get_varied_response('goodbye', responses)
         
@@ -160,6 +213,10 @@ class ShipraBrain:
     
     def get_company_info(self, query, lang):
         """Extract specific company information based on query"""
+        # Override lang if force_english is True
+        if self.force_english:
+            lang = 'english'
+            
         if 'president' in query or 'aditya' in query:
             if lang == 'hindi':
                 responses = [
@@ -169,9 +226,9 @@ class ShipraBrain:
                 ]
             else:
                 responses = [
-                    "Mr. Aditya Shrivastava hamare President aur Co-Founder hain. Woh strategic vision aur governance handle karte hain.",
-                    "Aditya ji Pushpak O2 ke President hain. Company ki strategic direction woh dekhte hain.",
-                    "Aditya Shrivastava sahab hamare chief leader hain, governance ka kaam karte hain."
+                    "Mr. Aditya Shrivastava is our President and Co-Founder. He handles strategic vision and governance.",
+                    "Aditya ji is the President of Pushpak O2. He oversees the company's strategic direction.",
+                    "Mr. Aditya Shrivastava is our chief leader, working as President handling governance."
                 ]
             return self.get_varied_response('president', responses)
             
@@ -184,9 +241,9 @@ class ShipraBrain:
                 ]
             else:
                 responses = [
-                    "Mr. Aneerudh Kumar hamare Co-Founder aur Technology Lead hain. Woh engineering aur systems architecture dekhte hain.",
-                    "Aneerudh ji technical operations handle karte hain. Woh hamare Technology Lead hain.",
-                    "Aneerudh Kumar sahab engineering ka poora kaam dekhte hain, Co-Founder bhi hain."
+                    "Mr. Aneerudh Kumar is our Co-Founder and Technology Lead. He handles engineering and systems architecture.",
+                    "Aneerudh ji handles technical operations. He is our Technology Lead.",
+                    "Mr. Aneerudh Kumar oversees all engineering work and is also a Co-Founder."
                 ]
             return self.get_varied_response('aneerudh', responses)
             
@@ -199,9 +256,9 @@ class ShipraBrain:
                 ]
             else:
                 responses = [
-                    "Pushpak O2 ke do co-founders hain - Mr. Aditya Shrivastava jo President hain aur Mr. Aneerudh Kumar jo Technology Lead hain. Dono milkar company ko chala rahe hain.",
-                    "Pushpak auto yaani Pushpak O2 ke founders hain Aditya Shrivastava sahab (President) aur Aneerudh Kumar ji (Technology Lead). Dono co-founders hain.",
-                    "Hamare company ke do mukhya neta hain - Aditya ji jo business operations handle karte hain aur Aneerudh ji jo technical work dekhte hain."
+                    "Pushpak O2 has two co-founders - Mr. Aditya Shrivastava who is the President and Mr. Aneerudh Kumar who is the Technology Lead. Both are running the company together.",
+                    "Pushpak auto, which is Pushpak O2, has founders Aditya Shrivastava (President) and Aneerudh Kumar (Technology Lead). Both are co-founders.",
+                    "Our company has two main leaders - Aditya ji who handles business operations and Aneerudh ji who oversees technical work."
                 ]
             return self.get_varied_response('pushpak_auto_founders', responses)
         elif 'founder' in query or 'co-founder' in query:
@@ -213,9 +270,9 @@ class ShipraBrain:
                 ]
             else:
                 responses = [
-                    "Pushpak O2 ke do co-founders hain - Mr. Aditya Shrivastava (President) aur Mr. Aneerudh Kumar (Technology Lead). Dono milkar company ko aage badha rahe hain.",
-                    "Hamare founders hain Aditya ji jo business operations handle karte hain aur Aneerudh ji jo technical side dekhte hain.",
-                    "Company ke do mukhya neta hain - strategic leadership ke liye Aditya Shrivastava aur technical innovation ke liye Aneerudh Kumar."
+                    "Pushpak O2 has two co-founders - Mr. Aditya Shrivastava (President) and Mr. Aneerudh Kumar (Technology Lead). Both are advancing the company together.",
+                    "Our founders are Aditya ji who handles business operations and Aneerudh ji who oversees the technical side.",
+                    "The company has two main leaders - Aditya Shrivastava for strategic leadership and Aneerudh Kumar for technical innovation."
                 ]
         elif 'location' in query or 'bhopal' in query:
             if lang == 'hindi':
@@ -226,9 +283,9 @@ class ShipraBrain:
                 ]
             else:
                 responses = [
-                    "Pushpak O2 ka headquarters Bhopal, Madhya Pradesh mein hai.",
-                    "Hamara mukhyalay Bhopal mein sthit hai, MP mein.",
-                    "Company ka base Bhopal, Madhya Pradesh mein hai."
+                    "Pushpak O2's headquarters is in Bhopal, Madhya Pradesh.",
+                    "Our headquarters is located in Bhopal, MP.",
+                    "The company's base is in Bhopal, Madhya Pradesh."
                 ]
             return self.get_varied_response('location', responses)
             
@@ -241,14 +298,18 @@ class ShipraBrain:
                 ]
             else:
                 responses = [
-                    "Pushpak O2 ek Indian aerospace company hai jo indigenous aviation platforms aur unmanned aerial systems develop karti hai.",
-                    "Yah Bharatiya aerospace company hai jo swadeshi vimanan takneek banati hai.",
-                    "Hamari company indigenous aircraft aur drone technology mein kaam karti hai."
+                    "Pushpak O2 is an Indian aerospace company that develops indigenous aviation platforms and unmanned aerial systems.",
+                    "It is an Indian aerospace company that builds indigenous aviation technology.",
+                    "Our company works in indigenous aircraft and drone technology."
                 ]
             return self.get_varied_response('company_general', responses)
     
     def get_vehicle_info(self, query, lang):
         """Extract specific vehicle information based on query"""
+        # Override lang if force_english is True
+        if self.force_english:
+            lang = 'english'
+            
         if 'capacity' in query or 'load' in query or 'person' in query:
             if lang == 'hindi':
                 responses = [
@@ -258,9 +319,9 @@ class ShipraBrain:
                 ]
             else:
                 responses = [
-                    "Pushpak vehicle ki load capacity 500kg hai ya 4 persons tak le ja sakta hai.",
-                    "Yah 4 logon ko carry kar sakta hai ya 500 kilo weight utha sakta hai.",
-                    "Ismein 4 vyakti baith sakte hain ya 500kg ka bhar le ja sakta hai."
+                    "Pushpak vehicle has a load capacity of 500kg or can carry up to 4 persons.",
+                    "It can carry 4 people or lift 500 kilograms of weight.",
+                    "The vehicle can seat 4 persons or carry a load of 500kg."
                 ]
             return self.get_varied_response('capacity', responses)
             
@@ -273,9 +334,9 @@ class ShipraBrain:
                 ]
             else:
                 responses = [
-                    "Pushpak vehicle mein AI-enabled autonomous flight, real-time obstacle detection, hydrogen fuel cell power, aur zero-emission operations hai.",
-                    "Ismein swachalit udan, badha pahchan, hydrogen fuel aur shunya pradooshan ki suvidha hai.",
-                    "Vehicle mein AI flight control, obstacle avoidance, hydrogen power aur eco-friendly operations hain."
+                    "Pushpak vehicle has AI-enabled autonomous flight, real-time obstacle detection, hydrogen fuel cell power, and zero-emission operations.",
+                    "It features autonomous flight, obstacle detection, hydrogen fuel, and pollution-free operations.",
+                    "The vehicle has AI flight control, obstacle avoidance, hydrogen power, and eco-friendly operations."
                 ]
             return self.get_varied_response('features', responses)
             
@@ -288,9 +349,9 @@ class ShipraBrain:
                 ]
             else:
                 responses = [
-                    "Pushpak ek advanced unmanned aerial system hai with hybrid capabilities aur DGCA compliant design.",
-                    "Yah ek unnat drone hai jo hybrid technology aur DGCA mankon ke anusar bana hai.",
-                    "Pushpak aerial vehicle ek smart UAS hai jo sabhi aviation niyamon ka palan karta hai."
+                    "Pushpak is an advanced unmanned aerial system with hybrid capabilities and DGCA compliant design.",
+                    "It is an advanced drone built with hybrid technology and DGCA standards.",
+                    "Pushpak aerial vehicle is a smart UAS that complies with all aviation regulations."
                 ]
             return self.get_varied_response('vehicle_general', responses)
     
