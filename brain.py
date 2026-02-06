@@ -2,6 +2,7 @@ from config import Config
 import os
 import re
 import random
+from datetime import datetime
 
 class ShipraBrain:
     def __init__(self, domain="General Assistant"):
@@ -94,6 +95,42 @@ class ShipraBrain:
         # Vehicle-related queries  
         elif any(word in query for word in ['vehicle', 'pushpak', 'aerial', 'drone', 'uas', 'features', 'technology', 'hydrogen', 'autonomous', 'capacity', 'load']):
             return self.get_vehicle_info(query, lang)
+        
+        # Time queries
+        elif any(word in query for word in ['time', 'samay', 'kitne baje', 'what time', 'current time', 'abhi kitne baje']):
+            now = datetime.now()
+            hour = now.hour
+            minute = now.minute
+            
+            if lang == 'hindi':
+                # Convert to 12-hour format for Hinglish
+                period = "subah" if hour < 12 else "shaam" if hour < 18 else "raat"
+                hour_12 = hour if hour <= 12 else hour - 12
+                hour_12 = 12 if hour_12 == 0 else hour_12
+                
+                if minute == 0:
+                    responses = [
+                        f"Abhi {hour_12} baje {period} ke hain.",
+                        f"Time hai {hour_12} baje {period}.",
+                        f"{period} ke {hour_12} baj gaye hain."
+                    ]
+                else:
+                    responses = [
+                        f"Abhi {hour_12} baj kar {minute} minute {period} ke hain.",
+                        f"Time hai {hour_12}:{minute:02d} {period}.",
+                        f"{period} ke {hour_12} baj kar {minute} minute hue hain."
+                    ]
+            else:
+                period = "AM" if hour < 12 else "PM"
+                hour_12 = hour if hour <= 12 else hour - 12
+                hour_12 = 12 if hour_12 == 0 else hour_12
+                
+                responses = [
+                    f"It's {hour_12}:{minute:02d} {period}.",
+                    f"The current time is {hour_12}:{minute:02d} {period}.",
+                    f"Right now it's {hour_12}:{minute:02d} {period}."
+                ]
+            return self.get_varied_response('time', responses)
         
         # Personal questions about Shipra
         elif any(word in query for word in ['who are you', 'kaun ho', 'tum kaun', 'your purpose', 'tumhara purpose', 'why you', 'kyu banaya']):
